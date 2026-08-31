@@ -901,7 +901,7 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .lv-row:hover { background: var(--line-soft); }
 
 .lv-thumb {
-  width: 68px; height: 68px; flex: none;
+  width: 92px; height: 92px; flex: none;
   border-radius: var(--r-sm); object-fit: cover;
   background: var(--line); border: 1px solid var(--line);
 }
@@ -929,7 +929,7 @@ table.data tbody tr:hover { background: var(--line-soft); }
 
 @media (max-width: 780px) {
   .lv-row { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
-  .lv-thumb { width: 52px; height: 52px; }
+  .lv-thumb { width: 64px; height: 64px; }
   .lv-when { width: auto; }
   .lv-body { flex: 1 1 100%; order: 3; }
   .lv-time { font-size: 1.125rem; }

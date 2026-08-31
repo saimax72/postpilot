@@ -116,71 +116,66 @@ layout_head('Queue', 'Queue', $actions);
 <?php else: ?>
 
   <div class="card">
-    <div class="table-wrap">
-      <table class="data">
-        <thead>
-          <tr>
-            <th style="width:150px">When</th>
-            <th>Post</th>
-            <th style="width:150px">Channels</th>
-            <th style="width:120px">Status</th>
-            <th style="width:120px"></th>
-          </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($posts as $p): ?>
-          <tr>
-            <td class="nowrap">
-              <strong><?= e(utc_to_local($p['scheduled_at'], $tz, 'j M Y')) ?></strong>
-              <div class="tiny muted"><?= e(utc_to_local($p['scheduled_at'], $tz, 'H:i')) ?></div>
-              <div class="lv-eta" data-at="<?= e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC'))) ?>"
-                   data-status="<?= e($p['status']) ?>"></div>
-            </td>
-            <td>
-              <div class="row" style="align-items:flex-start">
-                <?php if ($p['media_path']): ?>
-                  <span style="width:40px;height:40px;border-radius:8px;overflow:hidden;flex:none;background:var(--line-soft)">
-                    <?php if (is_video($p['media_path'])): ?>
-                      <video src="<?= e(media_url($p['media_path'])) ?>" muted style="width:100%;height:100%;object-fit:cover"></video>
-                    <?php else: ?>
-                      <img src="<?= e(media_url($p['media_path'])) ?>" alt="" style="width:100%;height:100%;object-fit:cover">
-                    <?php endif; ?>
-                  </span>
-                <?php endif; ?>
-                <span style="min-width:0">
-                  <?= e(str_limit($p['content'] ?: 'Media post', 110)) ?>
-                  <?php if ($p['last_error']): ?>
-                    <div class="tiny" style="color:var(--red);margin-top:3px">
-                      <?= $p['status'] === 'failed' ? 'Failed' : 'Retrying' ?>
-                      (attempt <?= (int)$p['attempts'] ?>): <?= e(str_limit($p['last_error'], 140)) ?>
-                    </div>
-                  <?php endif; ?>
-                </span>
-              </div>
-            </td>
-            <td>
-              <span class="row" style="gap:4px;flex-wrap:wrap">
-                <?php foreach ($p['targets'] as $t): ?>
-                  <span class="pdot pdot-sm" style="background:<?= e(platform_color($t['platform'])) ?>"
-                        title="<?= e(platform_label($t['platform']) . ' — ' . ($t['display_name'] ?? '') . ' (' . $t['status'] . ')') ?>">
-                    <?= platform_icon($t['platform'], 10) ?>
-                  </span>
-                <?php endforeach; ?>
+    <?php foreach ($posts as $p):
+        $tags  = extract_hashtags((string)$p['content']);
+        $ratio = $p['media_ratio'] ? (media_ratio($p['media_ratio'])['label'] ?? null) : null;
+        $sent  = in_array($p['status'], ['published', 'publishing'], true);
+    ?>
+      <div class="lv-row" onclick="Composer.open(<?= (int)$p['id'] ?>)">
+        <?php if ($p['media_path']): ?>
+          <?php if (is_video($p['media_path'])): ?>
+            <video class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" muted playsinline preload="metadata"></video>
+          <?php else: ?>
+            <img class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" alt="" loading="lazy">
+          <?php endif; ?>
+        <?php else: ?>
+          <span class="lv-thumb lv-thumb-empty"><?= icon('image', 22) ?></span>
+        <?php endif; ?>
+
+        <div class="lv-when">
+          <div class="tiny muted"><?= e(utc_to_local($p['scheduled_at'], $tz, 'j M Y')) ?></div>
+          <div class="lv-time"><?= e(utc_to_local($p['scheduled_at'], $tz, 'H:i')) ?></div>
+          <div class="lv-eta" data-at="<?= e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC'))) ?>"
+               data-status="<?= e($p['status']) ?>"></div>
+        </div>
+
+        <div class="lv-body">
+          <p class="lv-caption"><?= e(str_limit($p['content'] ?: 'Media post', 220)) ?></p>
+
+          <div class="lv-meta">
+            <?php foreach ($p['targets'] as $t): ?>
+              <span class="chip">
+                <span class="pdot pdot-sm" style="background:<?= e(platform_color($t['platform'])) ?>">
+                  <?= platform_icon($t['platform'], 10) ?>
+                </span><?= e($t['display_name'] ?: platform_label($t['platform'])) ?>
               </span>
-            </td>
-            <td><span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span></td>
-            <td class="nowrap">
-              <?php if (in_array($p['status'], ['published', 'publishing'], true)): ?>
-                <span class="tiny muted"><?= $p['published_at'] ? e(time_ago($p['published_at'])) : '—' ?></span>
-              <?php else: ?>
-                <button class="btn btn-ghost btn-sm" onclick="Composer.open(<?= (int)$p['id'] ?>)">Edit</button>
-              <?php endif; ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
+            <?php endforeach; ?>
+
+            <?php if ($ratio): ?><span class="chip"><?= e($ratio) ?></span><?php endif; ?>
+            <?php if ($tags): ?><span class="chip"><?= count($tags) ?> hashtags</span><?php endif; ?>
+            <?php if ($p['link_url']): ?><span class="chip"><?= icon('link', 11) ?> link</span><?php endif; ?>
+            <?php if (!empty($p['first_comment'])): ?><span class="chip">first comment</span><?php endif; ?>
+            <?php if (!empty($p['alt_text'])): ?><span class="chip">alt text</span><?php endif; ?>
+          </div>
+
+          <?php if ($p['last_error']): ?>
+            <div class="tiny" style="color:var(--red);margin-top:7px">
+              <?= $p['status'] === 'failed' ? 'Failed' : 'Retrying' ?>
+              (attempt <?= (int)$p['attempts'] ?>): <?= e(str_limit($p['last_error'], 200)) ?>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <div class="lv-side">
+          <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
+          <?php if ($sent && $p['published_at']): ?>
+            <span class="tiny muted"><?= e(time_ago($p['published_at'])) ?></span>
+          <?php elseif (!$sent): ?>
+            <span class="tiny muted">click to edit</span>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endforeach; ?>
   </div>
 
 <?php endif; ?>
