@@ -193,6 +193,15 @@ function post_save(int $userId, ?int $postId, string $content, array $accountIds
         if (!empty(platform($platform)['media_required']) && !$mediaPath && $status === 'scheduled') {
             return [false, platform_label($platform) . ' requires an image or video.'];
         }
+
+        // Instagram feed images must sit between 4:5 and 1.91:1. A 9:16 still is
+        // a Story or a Reel cover, and both use endpoints this app does not
+        // implement - so the API would reject it at publish time. Say so now,
+        // while the post can still be fixed.
+        if ($platform === 'instagram' && $mediaRatio === 'story' && $mediaPath && !is_video($mediaPath)) {
+            return [false, 'Instagram feed posts do not accept 9:16 images — that shape is for Stories and Reels. '
+                         . 'Choose Square, Portrait or Landscape for this post.'];
+        }
     }
 
     $pdo = db();

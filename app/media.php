@@ -29,7 +29,7 @@ function media_ratios(): array
         'story' => [
             'label' => 'Story / Reel', 'hint' => '9:16',
             'w' => 1080, 'h' => 1920,
-            'note' => 'Full screen vertical. For Reels, Stories and TikTok.',
+            'note' => 'Full screen vertical. Video only on Instagram - a 9:16 still is rejected by the feed.',
         ],
     ];
 }
