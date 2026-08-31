@@ -223,8 +223,11 @@ $todayKey = $today->format('Y-m-d');
                   <?php if (!empty($p['alt_text'])): ?><span class="chip">alt text</span><?php endif; ?>
                 </div>
 
-                <?php if ($p['status'] === 'failed' && $p['last_error']): ?>
-                  <div class="tiny" style="color:var(--red);margin-top:6px"><?= e(str_limit($p['last_error'], 160)) ?></div>
+                <?php if ($p['last_error']): ?>
+                  <div class="tiny" style="color:var(--red);margin-top:6px">
+                    <?= $p['status'] === 'failed' ? 'Failed' : 'Retrying' ?>
+                    (attempt <?= (int)$p['attempts'] ?>): <?= e(str_limit($p['last_error'], 180)) ?>
+                  </div>
                 <?php endif; ?>
               </div>
 

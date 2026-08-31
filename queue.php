@@ -149,8 +149,11 @@ layout_head('Queue', 'Queue', $actions);
                 <?php endif; ?>
                 <span style="min-width:0">
                   <?= e(str_limit($p['content'] ?: 'Media post', 110)) ?>
-                  <?php if ($p['status'] === 'failed' && $p['last_error']): ?>
-                    <div class="tiny" style="color:var(--red);margin-top:3px"><?= e(str_limit($p['last_error'], 120)) ?></div>
+                  <?php if ($p['last_error']): ?>
+                    <div class="tiny" style="color:var(--red);margin-top:3px">
+                      <?= $p['status'] === 'failed' ? 'Failed' : 'Retrying' ?>
+                      (attempt <?= (int)$p['attempts'] ?>): <?= e(str_limit($p['last_error'], 140)) ?>
+                    </div>
                   <?php endif; ?>
                 </span>
               </div>
