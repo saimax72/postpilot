@@ -400,7 +400,7 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-cell {
-  min-height: 132px; padding: 8px; border-right: 1px solid var(--line-soft);
+  min-height: 148px; padding: 8px; border-right: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft); position: relative;
   display: flex; flex-direction: column; gap: 5px;
   transition: background .12s ease;
@@ -426,12 +426,25 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .cal-cell:hover .add-slot { opacity: 1; }
 
 .ev {
-  display: block; width: 100%; text-align: left;
+  display: flex; align-items: flex-start; gap: 6px;
+  width: 100%; text-align: left;
   border: 0; border-left: 3px solid var(--brand);
   background: var(--line-soft); color: var(--ink);
-  border-radius: 7px; padding: 5px 7px; cursor: grab;
+  border-radius: 7px; padding: 4px 6px; cursor: grab;
   font-size: .75rem; line-height: 1.35;
   transition: transform .1s ease, box-shadow .1s ease;
+}
+.ev-main { min-width: 0; flex: 1; }
+
+/* Thumbnail is the cropped file, so the calendar shows what actually posts. */
+.ev-thumb {
+  width: 30px; height: 30px; flex: none;
+  border-radius: 5px; object-fit: cover;
+  background: var(--line);
+}
+.ev-thumb-empty {
+  display: grid; place-items: center;
+  color: var(--faint); background: var(--line);
 }
 .ev:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 .ev.dragging { opacity: .4; }
@@ -668,7 +681,8 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .topbar { padding: 14px 16px; }
   .cal-cell { min-height: 92px; padding: 5px; }
   .ev-text, .ev-icons { display: none; }
-  .ev { padding: 3px 5px; }
+  .ev { padding: 3px 4px; gap: 4px; }
+  .ev-thumb { width: 22px; height: 22px; }
   .cal-dow div { padding: 8px 5px; font-size: .625rem; }
   .site-nav { display: none; }
   .week-grid { grid-template-columns: 1fr; }
@@ -857,3 +871,7 @@ table.data tbody tr:hover { background: var(--line-soft); }
   font-size: .75rem !important; padding: 7px 9px !important;
   min-height: 0 !important; resize: vertical;
 }
+
+/* Week view has room for a larger thumbnail. */
+.week-col .ev-thumb { width: 40px; height: 40px; }
+.week-col .ev { padding: 5px 7px; gap: 8px; }

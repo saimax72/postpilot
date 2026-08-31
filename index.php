@@ -114,10 +114,13 @@ $platforms = platforms();
                 <span class="daynum"><?= $i ?></span>
                 <?php foreach ($evs as [$time, $text, $plat, $cls]): ?>
                   <span class="ev <?= $cls ?>" style="cursor:default">
-                    <span class="ev-time"><?= $time ?></span>
-                    <span class="ev-text"><?= e($text) ?></span>
-                    <span class="ev-icons">
-                      <span class="pdot pdot-sm" style="background:<?= e(platform_color($plat)) ?>"><?= platform_icon($plat, 10) ?></span>
+                    <span class="ev-thumb ev-thumb-empty"><?= icon('image', 13) ?></span>
+                    <span class="ev-main">
+                      <span class="ev-time"><?= $time ?></span>
+                      <span class="ev-text"><?= e($text) ?></span>
+                      <span class="ev-icons">
+                        <span class="pdot pdot-sm" style="background:<?= e(platform_color($plat)) ?>"><?= platform_icon($plat, 10) ?></span>
+                      </span>
                     </span>
                   </span>
                 <?php endforeach; ?>

@@ -92,8 +92,22 @@ layout_head('Calendar', 'Calendar', $actions);
 /** Render one post chip. */
 function ev_chip(array $p): string
 {
-    $out  = '<button type="button" class="ev st-' . e($p['status']) . '" draggable="true"'
-          . ' data-post="' . (int)$p['id'] . '" onclick="Composer.open(' . (int)$p['id'] . ')">';
+    $out = '<button type="button" class="ev st-' . e($p['status']) . '" draggable="true"'
+         . ' data-post="' . (int)$p['id'] . '" onclick="Composer.open(' . (int)$p['id'] . ')"'
+         . ' title="' . e($p['local']->format('H:i') . ' — ' . str_limit($p['content'] ?: 'Media post', 90)) . '">';
+
+    // The thumbnail is the cropped derivative, so the calendar shows exactly
+    // what will be posted rather than the original upload.
+    if ($p['media_path']) {
+        $src = e(media_url($p['media_path']));
+        $out .= is_video($p['media_path'])
+            ? '<video class="ev-thumb" src="' . $src . '" muted playsinline preload="metadata"></video>'
+            : '<img class="ev-thumb" src="' . $src . '" alt="" loading="lazy">';
+    } else {
+        $out .= '<span class="ev-thumb ev-thumb-empty">' . icon('image', 13) . '</span>';
+    }
+
+    $out .= '<span class="ev-main">';
     $out .= '<span class="ev-time">' . $p['local']->format('H:i') . '</span>';
     $out .= '<span class="ev-text">' . e(str_limit($p['content'] ?: 'Media post', 40)) . '</span>';
     $out .= '<span class="ev-icons">';
@@ -101,7 +115,7 @@ function ev_chip(array $p): string
         $out .= '<span class="pdot pdot-sm" style="background:' . e(platform_color($plat)) . '" title="' . e(platform_label($plat)) . '">'
               . platform_icon($plat, 10) . '</span>';
     }
-    $out .= '</span></button>';
+    $out .= '</span></span></button>';
     return $out;
 }
 
