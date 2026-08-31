@@ -233,6 +233,16 @@ function drive_instagram(array $post, array $target, string $token): array
         return ['ok' => false, 'error' => graph_error($create)];
     }
 
+    // Instagram fetches the image from our URL in the background. Publishing
+    // before that finishes fails with "Media ID is not available", which says
+    // nothing useful - and a rejected image (wrong aspect ratio, unreachable
+    // URL) surfaces the same way. Wait for the container to settle, then
+    // report what Instagram actually decided.
+    $ready = instagram_await_container($host, $create['id'], $token);
+    if (!$ready['ok']) {
+        return $ready;
+    }
+
     $publish = http_post("{$host}/{$igId}/media_publish", [
         'creation_id'  => $create['id'],
         'access_token' => $token,
@@ -250,6 +260,49 @@ function drive_instagram(array $post, array $target, string $token): array
         return ['ok' => true, 'id' => $publish['id'], 'url' => null];
     }
     return ['ok' => false, 'error' => graph_error($publish)];
+}
+
+/**
+ * Poll a media container until Instagram has finished fetching and checking
+ * the media. Images normally settle in a second or two; videos take longer.
+ *
+ * Returns ['ok' => true] once FINISHED, or ['ok' => false, 'error' => why].
+ */
+function instagram_await_container(string $host, string $containerId, string $token, int $maxSeconds = 45): array
+{
+    $waited = 0;
+    $step   = 2;
+    $last   = '';
+
+    while ($waited < $maxSeconds) {
+        $res = http_get("{$host}/{$containerId}", [
+            'fields'       => 'status_code,status',
+            'access_token' => $token,
+        ]);
+
+        $code = $res['status_code'] ?? '';
+        $last = $res['status'] ?? ($res['error']['message'] ?? '');
+
+        if ($code === 'FINISHED') {
+            return ['ok' => true];
+        }
+        if ($code === 'ERROR') {
+            // "status" carries Instagram's actual complaint, e.g. an aspect
+            // ratio outside 4:5..1.91:1, or an image it could not download.
+            return ['ok' => false, 'error' => 'Instagram rejected the media: '
+                . ($last ?: 'no reason given') . '.'];
+        }
+        if ($code === '' && !empty($res['error'])) {
+            return ['ok' => false, 'error' => graph_error($res)];
+        }
+
+        sleep($step);
+        $waited += $step;
+        $step = min($step + 1, 5);   // ease off rather than hammering
+    }
+
+    return ['ok' => false, 'error' => 'Instagram was still processing the media after '
+        . $maxSeconds . ' seconds' . ($last ? ' (' . $last . ')' : '') . '. It will retry.'];
 }
 
 /** Threads: same two-step container flow as Instagram. */
@@ -346,6 +399,25 @@ function absolute_media_url(?string $path): ?string
 function http_post(string $url, array $fields): array
 {
     return http_request($url, http_build_query($fields), ['Content-Type: application/x-www-form-urlencoded']);
+}
+
+function http_get(string $url, array $query = []): array
+{
+    $ch = curl_init($url . ($query ? '?' . http_build_query($query) : ''));
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 20,
+        CURLOPT_CONNECTTIMEOUT => 10,
+    ]);
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if ($raw === false) {
+        return ['error' => ['message' => 'Network error: ' . $err]];
+    }
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : ['error' => ['message' => 'Unexpected response: ' . mb_substr($raw, 0, 200)]];
 }
 
 function http_json(string $url, array $body, array $headers = []): array
