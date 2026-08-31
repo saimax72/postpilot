@@ -901,10 +901,13 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .lv-row:hover { background: var(--line-soft); }
 
 .lv-thumb {
-  width: 92px; height: 92px; flex: none;
+  width: 92px; flex: none; align-self: flex-start;
+  max-height: 190px;                 /* keeps a 9:16 row from towering */
   border-radius: var(--r-sm); object-fit: cover;
   background: var(--line); border: 1px solid var(--line);
 }
+/* Empty placeholder has no ratio to honour, so keep it square. */
+.lv-thumb-empty { height: 92px; aspect-ratio: auto !important; }
 .lv-thumb-empty { display: grid; place-items: center; color: var(--faint); }
 
 .lv-when { flex: none; width: 92px; }

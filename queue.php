@@ -124,9 +124,9 @@ layout_head('Queue', 'Queue', $actions);
       <div class="lv-row" onclick="Composer.open(<?= (int)$p['id'] ?>)">
         <?php if ($p['media_path']): ?>
           <?php if (is_video($p['media_path'])): ?>
-            <video class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" muted playsinline preload="metadata"></video>
+            <video class="lv-thumb" style="<?= e(thumb_style($p['media_ratio'] ?? null)) ?>" src="<?= e(media_url($p['media_path'])) ?>" muted playsinline preload="metadata"></video>
           <?php else: ?>
-            <img class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" alt="" loading="lazy">
+            <img class="lv-thumb" style="<?= e(thumb_style($p['media_ratio'] ?? null)) ?>" src="<?= e(media_url($p['media_path'])) ?>" alt="" loading="lazy">
           <?php endif; ?>
         <?php else: ?>
           <span class="lv-thumb lv-thumb-empty"><?= icon('image', 22) ?></span>

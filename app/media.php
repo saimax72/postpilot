@@ -227,3 +227,16 @@ function extract_mentions(string $text): array
     preg_match_all('/(?<![\w&])@([\p{L}\p{N}_.]+)/u', $text, $m);
     return array_values(array_unique($m[1] ?? []));
 }
+
+/**
+ * Inline style sizing a thumbnail to a post's own aspect ratio.
+ *
+ * media_path is already cropped to that ratio, so rendering the box at the
+ * same shape shows the whole posted image rather than cropping it a second
+ * time inside a square.
+ */
+function thumb_style(?string $ratioKey, int $width = 92): string
+{
+    $r = ratio_value($ratioKey && media_ratio($ratioKey) ? $ratioKey : 'square');
+    return sprintf('width:%dpx;aspect-ratio:%s;height:auto', $width, rtrim(rtrim(number_format($r, 4, '.', ''), '0'), '.'));
+}
