@@ -97,12 +97,29 @@
       probe.src = url;
     },
 
-    /** Size the frame to the current ratio, then re-fit the image. */
+    /**
+     * Size the frame to the current ratio, within a height budget.
+     * A 9:16 frame at full column width is ~600px tall, which pushes the rest
+     * of the composer off screen - so tall ratios lose width instead.
+     */
+    maxHeight: 400,
+
     shapeFrame: function () {
       var f = this.frame();
       if (!f) return;
-      var w = f.clientWidth || 300;
-      f.style.height = Math.round(w / RATIOS[this.ratio]) + 'px';
+
+      var stage = f.parentElement;
+      var avail = (stage ? stage.clientWidth : 0) || 340;
+      var w = avail;
+      var h = w / RATIOS[this.ratio];
+
+      if (h > this.maxHeight) {
+        h = this.maxHeight;
+        w = h * RATIOS[this.ratio];
+      }
+
+      f.style.width  = Math.round(w) + 'px';
+      f.style.height = Math.round(h) + 'px';
     },
 
     /** Smallest scale at which the image still covers the frame. */
@@ -442,9 +459,15 @@
 
         var frame = $('#pv-frame'), img = $('#pv-img');
         var b  = Cropper.box();
-        var pw = frame.clientWidth || 240;
-        var ph = pw / RATIOS[Cropper.ratio];
 
+        // Same height budget as the cropper, so a tall preview cannot run off
+        // the bottom of the panel.
+        var pw = (frame.parentElement ? frame.parentElement.clientWidth : 0) || 240;
+        var ph = pw / RATIOS[Cropper.ratio];
+        var cap = 320;
+        if (ph > cap) { ph = cap; pw = ph * RATIOS[Cropper.ratio]; }
+
+        frame.style.width  = Math.round(pw) + 'px';
         frame.style.height = Math.round(ph) + 'px';
         img.src = this.mediaUrl;
         img.style.width  = (pw / b.fw) + 'px';

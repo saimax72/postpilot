@@ -93,6 +93,50 @@
               </div>
             </div>
 
+            <label class="field">
+              <span>Link (optional)</span>
+              <input type="url" name="link_url" id="c-link" placeholder="https://your-site.com/offer">
+            </label>
+
+            <details class="more-options">
+              <summary>More options</summary>
+              <div style="padding-top:16px">
+                <label class="field">
+                  <span>Alt text</span>
+                  <input type="text" name="alt_text" id="c-alt" maxlength="400"
+                         placeholder="Describe the image for people using a screen reader">
+                  <span class="hint">Sent to Instagram with the image. Good for accessibility, and it is indexed.</span>
+                </label>
+
+                <label class="field" style="margin-bottom:0">
+                  <span>First comment</span>
+                  <textarea name="first_comment" id="c-first" rows="3" maxlength="600"
+                            style="min-height:76px"
+                            placeholder="#hashtags #you #would #rather #keep #out #of #the #caption"></textarea>
+                  <span class="hint">
+                    Posted as a comment straight after publishing — the usual place to park a wall of hashtags.
+                    Instagram only; needs the <span class="mono">instagram_manage_comments</span> permission.
+                  </span>
+                  <?php if ($sets): ?>
+                    <div class="set-bar" style="margin-top:8px">
+                      <span class="tiny muted nowrap">Insert set:</span>
+                      <?php foreach ($sets as $hs): ?>
+                        <button type="button" class="set-chip"
+                                data-set="<?= (int)$hs['id'] ?>" data-target="c-first"
+                                title="<?= e(implode(' ', $hs['tag_list'])) ?>">
+                          <?= e($hs['name']) ?> <span class="tiny muted"><?= (int)$hs['tag_count'] ?></span>
+                        </button>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php endif; ?>
+                </label>
+              </div>
+            </details>
+
+          </div>
+
+          <!-- ---------- Middle: media + cropper ---------- -->
+          <div class="composer-media">
             <!-- ---------- Media + cropper ---------- -->
             <div class="field">
               <span class="label">Media</span>
@@ -142,46 +186,6 @@
                 </div>
               </div>
             </div>
-
-            <label class="field">
-              <span>Link (optional)</span>
-              <input type="url" name="link_url" id="c-link" placeholder="https://your-site.com/offer">
-            </label>
-
-            <details class="more-options">
-              <summary>More options</summary>
-              <div style="padding-top:16px">
-                <label class="field">
-                  <span>Alt text</span>
-                  <input type="text" name="alt_text" id="c-alt" maxlength="400"
-                         placeholder="Describe the image for people using a screen reader">
-                  <span class="hint">Sent to Instagram with the image. Good for accessibility, and it is indexed.</span>
-                </label>
-
-                <label class="field" style="margin-bottom:0">
-                  <span>First comment</span>
-                  <textarea name="first_comment" id="c-first" rows="3" maxlength="600"
-                            style="min-height:76px"
-                            placeholder="#hashtags #you #would #rather #keep #out #of #the #caption"></textarea>
-                  <span class="hint">
-                    Posted as a comment straight after publishing — the usual place to park a wall of hashtags.
-                    Instagram only; needs the <span class="mono">instagram_manage_comments</span> permission.
-                  </span>
-                  <?php if ($sets): ?>
-                    <div class="set-bar" style="margin-top:8px">
-                      <span class="tiny muted nowrap">Insert set:</span>
-                      <?php foreach ($sets as $hs): ?>
-                        <button type="button" class="set-chip"
-                                data-set="<?= (int)$hs['id'] ?>" data-target="c-first"
-                                title="<?= e(implode(' ', $hs['tag_list'])) ?>">
-                          <?= e($hs['name']) ?> <span class="tiny muted"><?= (int)$hs['tag_count'] ?></span>
-                        </button>
-                      <?php endforeach; ?>
-                    </div>
-                  <?php endif; ?>
-                </label>
-              </div>
-            </details>
           </div>
 
           <!-- ---------- Right: when + preview ---------- -->

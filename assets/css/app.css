@@ -464,22 +464,23 @@ table.data tbody tr:hover { background: var(--line-soft); }
   position: fixed; inset: 0; background: rgba(20, 22, 28, .5);
   backdrop-filter: blur(6px) saturate(120%); z-index: 100;
   display: flex; align-items: flex-start; justify-content: center;
-  padding: 5vh 16px; overflow-y: auto;
+  padding: 3vh 16px; overflow-y: auto;
 }
 .modal {
   background: var(--card); border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg); width: 100%; max-width: 940px;
+  box-shadow: var(--shadow-lg); width: 100%; max-width: 1280px;
+  max-height: 94vh; display: flex; flex-direction: column;
   animation: pop .18s ease;
 }
 @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } }
 .modal-head {
-  padding: 20px 26px; border-bottom: 1px solid var(--line);
+  flex: none; padding: 18px 26px; border-bottom: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .modal-head h2 { margin: 0; font-size: 1.25rem; }
-.modal-body { padding: 24px 26px; }
+.modal-body { padding: 22px 26px; overflow-y: auto; flex: 1; min-height: 0; }
 .modal-foot {
-  padding: 18px 26px; border-top: 1px solid var(--line);
+  flex: none; padding: 14px 26px; border-top: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
 }
 .x-close {
@@ -488,7 +489,15 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .x-close:hover { background: var(--line-soft); color: var(--ink); }
 
-.composer { display: grid; grid-template-columns: 1fr 300px; gap: 26px; }
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px) minmax(0, 300px);
+  gap: 26px;
+  align-items: start;
+}
+/* The media column is its own scroll context so a 9:16 frame cannot push
+   the caption and the preview off the bottom of the screen. */
+.composer-media { min-width: 0; }
 
 .acct-picker { display: flex; flex-wrap: wrap; gap: 8px; }
 .acct {
@@ -635,6 +644,10 @@ table.data tbody tr:hover { background: var(--line-soft); }
    Responsive
    ========================================================================== */
 
+@media (max-width: 1180px) {
+  .composer { grid-template-columns: minmax(0, 1fr) minmax(0, 320px); }
+}
+
 @media (max-width: 900px) {
   .composer { grid-template-columns: 1fr; }
   .auth-wrap { grid-template-columns: 1fr; }
@@ -690,9 +703,9 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .ratio-box.r-landscape { width: 24px; height: 13px; }
 .ratio-box.r-story     { width: 13px; height: 23px; }
 
-.crop-stage { max-width: 340px; }
+.crop-stage { max-width: 360px; margin: 0 auto; }
 .crop-frame {
-  position: relative; width: 100%; overflow: hidden;
+  position: relative; width: 100%; margin: 0 auto; overflow: hidden;
   border-radius: var(--r); background: #0b1220;
   cursor: grab; touch-action: none; user-select: none;
 }
@@ -725,7 +738,7 @@ table.data tbody tr:hover { background: var(--line-soft); }
    Richer preview
    ========================================================================== */
 
-.pv-frame { position: relative; width: 100%; overflow: hidden; border-radius: 8px; background: var(--line-soft); }
+.pv-frame { position: relative; width: 100%; margin: 0 auto; overflow: hidden; border-radius: 8px; background: var(--line-soft); }
 .pv-frame img {
   position: absolute; max-width: none; max-height: none;
   object-fit: fill;   /* the element is already sized to the source aspect */
