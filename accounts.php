@@ -28,6 +28,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if (($_POST['do'] ?? '') === 'credentials') {
+        $ok = account_credentials(
+            (int)($_POST['id'] ?? 0),
+            $uid,
+            trim((string)($_POST['access_token'] ?? '')) ?: null,
+            trim((string)($_POST['external_id'] ?? '')) ?: null
+        );
+        flash($ok ? 'success' : 'error',
+            $ok ? 'Credentials saved. This account will publish for real from now on.'
+                : 'That account was not found.');
+    }
+
+    if (($_POST['do'] ?? '') === 'demote') {
+        account_clear_credentials((int)($_POST['id'] ?? 0), $uid);
+        flash('success', 'Credentials removed. This account is back in demo mode.');
+    }
+
     if (($_POST['do'] ?? '') === 'disconnect') {
         account_disconnect((int)($_POST['id'] ?? 0), $uid);
         flash('success', 'Account disconnected. Unsent posts that had no other channel were removed with it.');
@@ -157,11 +174,51 @@ layout_head('Accounts', 'Connected accounts',
                 </td>
                 <td class="tiny muted nowrap">added <?= e(time_ago($a['created_at'])) ?></td>
                 <td class="nowrap" style="text-align:right">
-                  <form method="post" onsubmit="return confirm('Disconnect this account? Unsent posts left with no other channel will be deleted.')">
+                  <div class="row" style="justify-content:flex-end;gap:6px">
+                    <button class="btn <?= $a['access_token'] ? 'btn-ghost' : 'btn-soft' ?> btn-sm" type="button"
+                            onclick="document.getElementById('cred-<?= (int)$a['id'] ?>').classList.toggle('hide')">
+                      <?= $a['access_token'] ? 'Credentials' : 'Go live' ?>
+                    </button>
+                    <form method="post" style="margin:0"
+                          onsubmit="return confirm('Disconnect this account? Unsent posts left with no other channel will be deleted.')">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="do" value="disconnect">
+                      <input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+                      <button class="btn btn-ghost btn-sm" type="submit">Disconnect</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr class="hide" id="cred-<?= (int)$a['id'] ?>">
+                <td colspan="4" style="background:var(--line-soft)">
+                  <form method="post" style="padding:6px 0">
                     <?= csrf_field() ?>
-                    <input type="hidden" name="do" value="disconnect">
                     <input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
-                    <button class="btn btn-ghost btn-sm" type="submit">Disconnect</button>
+
+                    <div class="row" style="gap:14px;align-items:flex-start;flex-wrap:wrap">
+                      <label class="field grow" style="min-width:260px;margin:0">
+                        <span>Access token</span>
+                        <input type="text" name="access_token" autocomplete="off"
+                               placeholder="<?= $a['access_token'] ? 'Stored — leave blank to keep it' : 'Paste the long-lived token' ?>">
+                        <span class="hint">Encrypted with APP_KEY before it is stored.</span>
+                      </label>
+                      <label class="field grow" style="min-width:220px;margin:0">
+                        <span><?= e(platform_label($a['platform'])) ?> account ID</span>
+                        <input type="text" name="external_id" value="<?= e($a['external_id'] ?? '') ?>"
+                               placeholder="<?= $a['platform'] === 'linkedin' ? 'urn:li:person:xxxx' : '17841400000000000' ?>">
+                        <span class="hint"><?= e(platform($a['platform'])['oauth_note'] ?? '') ?></span>
+                      </label>
+                    </div>
+
+                    <div class="row" style="margin-top:12px">
+                      <button class="btn btn-sm" type="submit" name="do" value="credentials">Save credentials</button>
+                      <?php if ($a['access_token']): ?>
+                        <button class="btn btn-ghost btn-sm" type="submit" name="do" value="demote"
+                                onclick="return confirm('Remove the stored token? This account goes back to demo mode and will stop publishing for real.')">
+                          Back to demo mode
+                        </button>
+                      <?php endif; ?>
+                    </div>
                   </form>
                 </td>
               </tr>

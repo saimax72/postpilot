@@ -31,6 +31,47 @@ function account_connect(int $userId, string $platform, string $displayName, ?st
     return $id;
 }
 
+/**
+ * Set or replace the stored API credentials for a connected account, without
+ * disconnecting it. Network tokens expire - Instagram's every 60 days - so
+ * this is a routine chore, not a one-off.
+ */
+function account_credentials(int $id, int $userId, ?string $token, ?string $externalId): bool
+{
+    $acct = account_find($id, $userId);
+    if (!$acct) {
+        return false;
+    }
+
+    // An empty token field means "leave it alone", not "clear it" - otherwise
+    // editing the account ID would silently drop the account into demo mode.
+    if ($token !== null && $token !== '') {
+        db_run('UPDATE social_accounts SET access_token = ? WHERE id = ? AND user_id = ?',
+            [encrypt_secret($token), $id, $userId]);
+    }
+
+    db_run('UPDATE social_accounts SET external_id = ?, status = ? WHERE id = ? AND user_id = ?',
+        [$externalId ?: null, 'connected', $id, $userId]);
+
+    log_activity($userId, 'account_credentials',
+        platform_label($acct['platform']) . ' - ' . $acct['display_name']
+        . ($token ? ' (token updated)' : ' (id updated)'));
+
+    return true;
+}
+
+/** Remove stored credentials, dropping the account back to demo mode. */
+function account_clear_credentials(int $id, int $userId): void
+{
+    $acct = account_find($id, $userId);
+    if (!$acct) {
+        return;
+    }
+    db_run('UPDATE social_accounts SET access_token = NULL WHERE id = ? AND user_id = ?', [$id, $userId]);
+    log_activity($userId, 'account_credentials_cleared',
+        platform_label($acct['platform']) . ' - ' . $acct['display_name']);
+}
+
 function account_disconnect(int $id, int $userId): void
 {
     $acct = account_find($id, $userId);
