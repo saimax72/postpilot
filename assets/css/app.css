@@ -1011,3 +1011,20 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .next-up { flex-wrap: wrap; }
   .next-eta { font-size: 1.25rem; }
 }
+
+/* ---------- Grid preview: upcoming vs live ---------- */
+
+.feed-cell { cursor: pointer; }
+.feed-cell.is-upcoming { box-shadow: inset 0 0 0 2px var(--brand); }
+.feed-cell.is-upcoming::after {
+  content: ""; position: absolute; inset: 0;
+  background: var(--brand); opacity: .16; pointer-events: none;
+}
+.feed-tag {
+  position: absolute; left: 4px; bottom: 4px; z-index: 1;
+  padding: 1px 6px; border-radius: 4px;
+  background: var(--brand); color: #fff;
+  font-size: .625rem; font-weight: 700; letter-spacing: .02em;
+}
+.feed-cell.is-live { display: block; }
+.feed-cell.is-live:hover { opacity: .85; }

@@ -16,17 +16,30 @@ if (!$selected && $visual) {
     $selected = (int)$visual[0]['id'];
 }
 
-$posts = [];
+$posts   = [];
+$account = $selected ? account_find($selected, $uid) : null;
+$live    = ['ok' => false, 'items' => [], 'cached' => false, 'error' => null];
+
 if ($selected) {
+    // Only what has not gone out yet - anything published is already in the
+    // real feed below, and showing it twice would misrepresent the grid.
     $posts = attach_targets(db_all(
         "SELECT p.* FROM posts p
          JOIN post_targets t ON t.post_id = p.id
-         WHERE p.user_id = ? AND t.social_account_id = ? AND p.status <> 'failed'
-         ORDER BY p.scheduled_at DESC
-         LIMIT 24",
+         WHERE p.user_id = ? AND t.social_account_id = ?
+           AND p.status IN ('scheduled','publishing','draft')
+         ORDER BY p.scheduled_at ASC
+         LIMIT 18",
         [$uid, $selected]
     ));
+
+    if ($account && $account['platform'] === 'instagram') {
+        $live = ig_recent_media($account, 12, !empty($_GET['refresh']));
+    }
 }
+
+// Newest-first is how a feed fills: the next post to go out sits top left.
+$upcoming = array_reverse($posts);
 
 layout_head('Grid preview', 'Grid preview',
     '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>');
@@ -57,29 +70,56 @@ layout_head('Grid preview', 'Grid preview',
 
   <div class="row" style="align-items:flex-start;gap:32px;flex-wrap:wrap">
     <div>
-      <p class="small muted">Newest first — exactly how the feed will fill in.</p>
-      <div class="feed-grid">
-        <?php if (!$posts): ?>
-          <?php for ($i = 0; $i < 9; $i++): ?>
-            <div class="feed-cell"><span class="ph">empty</span></div>
-          <?php endfor; ?>
-        <?php else: ?>
-          <?php foreach ($posts as $p): ?>
-            <div class="feed-cell" title="<?= e(utc_to_local($p['scheduled_at'], $tz, 'j M H:i') . ' — ' . str_limit($p['content'], 60)) ?>">
-              <?php if ($p['media_path'] && is_video($p['media_path'])): ?>
-                <video src="<?= e(media_url($p['media_path'])) ?>" muted playsinline></video>
-              <?php elseif ($p['media_path']): ?>
-                <img src="<?= e(media_url($p['media_path'])) ?>" alt="">
-              <?php else: ?>
-                <span class="ph"><?= e(str_limit($p['content'], 46)) ?></span>
-              <?php endif; ?>
-            </div>
-          <?php endforeach; ?>
-          <?php for ($i = count($posts); $i < 9; $i++): ?>
-            <div class="feed-cell"><span class="ph">empty</span></div>
-          <?php endfor; ?>
+      <div class="row-between" style="margin-bottom:10px;max-width:420px">
+        <span class="small muted">Upcoming posts stacked on your real feed.</span>
+        <?php if ($live['ok']): ?>
+          <a class="tiny" href="?account=<?= (int)$selected ?>&amp;refresh=1">Refresh</a>
         <?php endif; ?>
       </div>
+
+      <?php if ($live['error']): ?>
+        <div class="alert alert-warn small" style="max-width:420px"><?= e($live['error']) ?></div>
+      <?php endif; ?>
+
+      <div class="feed-grid">
+        <?php foreach ($upcoming as $p): ?>
+          <div class="feed-cell is-upcoming"
+               title="<?= e(utc_to_local($p['scheduled_at'], $tz, 'j M H:i') . ' — ' . str_limit($p['content'], 60)) ?>"
+               onclick="Composer.open(<?= (int)$p['id'] ?>)">
+            <?php if ($p['media_path'] && is_video($p['media_path'])): ?>
+              <video src="<?= e(media_url($p['media_path'])) ?>" muted playsinline></video>
+            <?php elseif ($p['media_path']): ?>
+              <img src="<?= e(media_url($p['media_path'])) ?>" alt="">
+            <?php else: ?>
+              <span class="ph"><?= e(str_limit($p['content'], 46)) ?></span>
+            <?php endif; ?>
+            <span class="feed-tag"><?= e(utc_to_local($p['scheduled_at'], $tz, 'j M')) ?></span>
+          </div>
+        <?php endforeach; ?>
+
+        <?php foreach ($live['items'] as $m): ?>
+          <a class="feed-cell is-live" href="<?= e($m['permalink']) ?>" target="_blank" rel="noopener"
+             title="<?= e(str_limit($m['caption'], 80)) ?>">
+            <?php if ($m['image']): ?>
+              <img src="<?= e($m['image']) ?>" alt="" loading="lazy">
+            <?php else: ?>
+              <span class="ph">on Instagram</span>
+            <?php endif; ?>
+          </a>
+        <?php endforeach; ?>
+
+        <?php
+        $shown = count($upcoming) + count($live['items']);
+        for ($i = $shown; $i < 9; $i++): ?>
+          <div class="feed-cell"><span class="ph">empty</span></div>
+        <?php endfor; ?>
+      </div>
+
+      <p class="tiny muted" style="max-width:420px;margin-top:10px">
+        Tinted cells are scheduled and not yet live. The rest are pulled from
+        <?= $account ? e($account['display_name']) : 'your account' ?>
+        <?= $live['cached'] ? ' (cached, refreshes every 15 minutes)' : '' ?>.
+      </p>
     </div>
 
     <div class="card grow" style="min-width:280px">
@@ -88,13 +128,17 @@ layout_head('Grid preview', 'Grid preview',
         <?php if (!$posts): ?>
           <p class="muted small">Nothing scheduled for this channel yet.</p>
         <?php else: ?>
-          <?php foreach (array_slice($posts, 0, 8) as $p): ?>
+          <?php foreach ($posts as $p): ?>
             <button class="row" style="text-align:left;border:0;background:none;cursor:pointer;padding:0;font:inherit;color:inherit"
                     onclick="Composer.open(<?= (int)$p['id'] ?>)">
               <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
               <span class="grow" style="min-width:0">
                 <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= e(str_limit($p['content'] ?: 'Media post', 46)) ?></div>
-                <div class="tiny muted"><?= e(utc_to_local($p['scheduled_at'], $tz, 'D j M · H:i')) ?></div>
+                <div class="tiny muted">
+                  <?= e(utc_to_local($p['scheduled_at'], $tz, 'D j M · H:i')) ?>
+                  <span class="lv-eta" data-at="<?= e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC'))) ?>"
+                        data-status="<?= e($p['status']) ?>"></span>
+                </div>
               </span>
             </button>
           <?php endforeach; ?>
