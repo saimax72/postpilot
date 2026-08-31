@@ -267,8 +267,16 @@
 
         if (data.failed && data.failed.length) {
           Bulk.fail(data.created + ' created, ' + data.failed.length + ' skipped: ' +
-            data.failed.slice(0, 3).map(function (f) { return f.name + ' (' + f.error + ')'; }).join('; '));
-          Bulk.items = [];
+            data.failed.slice(0, 3).map(function (f) { return f.name + ' (' + f.error + ')'; }).join('; ')
+            + (data.created === 0 ? ' — your images are still queued, fix the cause and try again.' : ''));
+
+          // Drop only what actually landed. Wiping the queue on a failure means
+          // re-uploading everything to retry, which is exactly the wrong moment.
+          if (data.created > 0) {
+            var made = {};
+            (data.failed || []).forEach(function (f) { made[f.name] = true; });
+            Bulk.items = Bulk.items.filter(function (it) { return made[it.name]; });
+          }
           Bulk.render();
           return;
         }
