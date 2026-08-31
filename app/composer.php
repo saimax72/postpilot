@@ -27,6 +27,12 @@
         <div id="c-error" class="alert alert-error hide"></div>
         <div id="c-note"  class="alert alert-success hide"></div>
 
+        <!-- Shown instead of the editor once a post has gone out. -->
+        <div id="c-sent" class="alert alert-info hide" style="display:block">
+          <strong id="c-sent-head"></strong>
+          <div id="c-sent-body" class="small" style="margin-top:8px"></div>
+        </div>
+
         <?php $templates = templates_for_user((int)auth_id()); ?>
         <?php if ($templates): ?>
           <div class="tpl-bar">
@@ -237,7 +243,7 @@
         <button type="button" class="btn btn-ghost btn-sm hide" id="c-delete" onclick="Composer.remove()">
           <?= icon('trash', 15) ?> Delete
         </button>
-        <div class="row" style="margin-left:auto;flex-wrap:wrap">
+        <div class="row" style="margin-left:auto;flex-wrap:wrap" id="c-actions">
           <button type="button" class="btn btn-ghost btn-sm" onclick="Composer.saveTemplate()">
             Save as template
           </button>
@@ -248,6 +254,8 @@
           </button>
           <button type="submit" class="btn"><?= icon('send', 16) ?> Schedule post</button>
         </div>
+        <button type="button" class="btn hide" id="c-close-btn" style="margin-left:auto"
+                onclick="Composer.close()">Close</button>
       </div>
     </form>
   </div>

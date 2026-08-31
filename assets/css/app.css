@@ -934,3 +934,23 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .lv-body { flex: 1 1 100%; order: 3; }
   .lv-time { font-size: 1.125rem; }
 }
+
+/* ---------- Published (read-only) composer ---------- */
+
+.sent-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.sent-row:last-child { margin-bottom: 0; }
+.sent-note {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--brand-100);
+  font-size: .8125rem; opacity: .9;
+}
+
+/* Locked fields should read as records, not as inputs awaiting typing. */
+.is-sent input:disabled,
+.is-sent textarea:disabled,
+.is-sent select:disabled {
+  background: var(--line-soft); color: var(--ink-2);
+  opacity: 1; -webkit-text-fill-color: var(--ink-2); cursor: default;
+}
+.is-sent .crop-frame { cursor: default; }
+.is-sent .ratio-btn:disabled { opacity: .55; cursor: default; }

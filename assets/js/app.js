@@ -300,6 +300,7 @@
       $('#c-status').value         = 'scheduled';
       $('#c-error').classList.add('hide');
       $('#c-note').classList.add('hide');
+      $('#c-sent').classList.add('hide');
       $('#c-delete').classList.add('hide');
       $('#c-template-id').value = '';
       this.activeTemplate = null;
@@ -354,10 +355,15 @@
         }
       }
 
+      this.setSent(post);
+
       this.el.classList.remove('hide');
       document.body.style.overflow = 'hidden';
       this.refresh();
-      setTimeout(function () { $('#c-content').focus(); }, 40);
+
+      if (!post || (post.status !== 'published' && post.status !== 'publishing')) {
+        setTimeout(function () { $('#c-content').focus(); }, 40);
+      }
     },
 
     close: function () {
@@ -367,6 +373,69 @@
       }
       if (this.el) this.el.classList.add('hide');
       document.body.style.overflow = '';
+    },
+
+    /**
+     * A post that has gone out cannot be edited - post_save() refuses it
+     * server-side. Offering fields and a Schedule button that will be rejected
+     * is just a trap, so published posts open locked, with an account of what
+     * actually happened on each network.
+     */
+    setSent: function (post) {
+      var sent = !!post && (post.status === 'published' || post.status === 'publishing');
+
+      $('#composer-title').textContent = sent
+        ? (post.status === 'publishing' ? 'Publishing…' : 'Published post')
+        : (post ? 'Edit post' : 'New post');
+
+      // Lock every input rather than hiding them: seeing what went out is the
+      // point of opening a published post.
+      $$('#composer-form input, #composer-form textarea, #composer-form select').forEach(function (el) {
+        if (el.type === 'hidden') return;
+        el.disabled = sent;
+      });
+      $$('#c-ratios .ratio-btn, .set-chip, .tpl-chip, #c-zoom').forEach(function (el) { el.disabled = sent; });
+
+      $('#c-actions').classList.toggle('hide', sent);
+      $('#c-close-btn').classList.toggle('hide', !sent);
+      $('#c-dropzone').classList.toggle('hide', sent || !!this.mediaUrl);
+      $('#composer').classList.toggle('is-sent', sent);
+
+      var banner = $('#c-sent');
+      if (!sent) { banner.classList.add('hide'); return; }
+
+      var results = post.results || [];
+      var demo = results.filter(function (r) { return r.demo; });
+
+      $('#c-sent-head').textContent = demo.length === results.length && results.length
+        ? 'Recorded as published — but nothing was sent'
+        : 'This post has gone out and can no longer be edited.';
+
+      var rows = results.map(function (r) {
+        var where = r.account ? r.label + ' · ' + r.account : r.label;
+        if (r.demo) {
+          return '<div class="sent-row"><span class="pdot pdot-sm" style="background:' + r.colour + '"></span>' +
+                 '<span><strong>' + escapeHtml(where) + '</strong> — demo mode, not sent to the network</span></div>';
+        }
+        if (r.status === 'published') {
+          return '<div class="sent-row"><span class="pdot pdot-sm" style="background:' + r.colour + '"></span>' +
+                 '<span><strong>' + escapeHtml(where) + '</strong> — published' +
+                 (r.url ? ' · <a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">view</a>' : '') +
+                 '</span></div>';
+        }
+        return '<div class="sent-row"><span class="pdot pdot-sm" style="background:' + r.colour + '"></span>' +
+               '<span><strong>' + escapeHtml(where) + '</strong> — ' + escapeHtml(r.status) +
+               (r.error ? ': ' + escapeHtml(r.error) : '') + '</span></div>';
+      }).join('');
+
+      if (demo.length) {
+        rows += '<div class="sent-note">This account has no API credentials stored, so PostPilot ran the ' +
+                'whole schedule-and-publish pipeline without calling the network. Add an access token on the ' +
+                '<a href="/accounts.php">Accounts</a> page to publish for real.</div>';
+      }
+
+      $('#c-sent-body').innerHTML = rows;
+      banner.classList.remove('hide');
     },
 
     activeLimit: function () {

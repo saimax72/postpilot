@@ -333,6 +333,18 @@ function composer_payload(array $posts, array $accounts, string $tz): string
             'link'           => $p['link_url'],
             'accounts'       => array_map('intval', array_column($p['targets'] ?? [], 'social_account_id')),
             'error'          => $p['last_error'],
+            // Per-network outcome, so a published post can explain itself -
+            // in particular whether it actually went out or was a demo run.
+            'results'        => array_map(fn($t) => [
+                'platform' => $t['platform'],
+                'label'    => platform_label($t['platform']),
+                'account'  => $t['display_name'] ?? '',
+                'colour'   => platform_color($t['platform']),
+                'status'   => $t['status'],
+                'url'      => $t['remote_url'],
+                'demo'     => str_starts_with((string)$t['remote_post_id'], 'demo-'),
+                'error'    => $t['error'],
+            ], $p['targets'] ?? []),
         ];
     }
 
