@@ -314,6 +314,14 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (!$('#b-dropzone')) return;
 
+    // With a single channel there is nothing to choose, so tick it. Having to
+    // select the only option is friction that only ever produces an error.
+    var chans = $$('#b-accounts input');
+    if (chans.length === 1) {
+      chans[0].checked = true;
+      chans[0].closest('.acct').classList.add('on');
+    }
+
     // Default the start date to tomorrow.
     var d = new Date();
     d.setDate(d.getDate() + 1);
