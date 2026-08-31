@@ -1,0 +1,11 @@
+# Uploaded media is served as static files only - never executed.
+# (No php_flag here: Hostinger runs LiteSpeed + PHP-FPM, where php_flag
+#  in .htaccess causes a 500 rather than disabling the engine.)
+<FilesMatch "\.(php|php\d|phtml|phar|inc|cgi|pl|py|sh|htaccess)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Content-Disposition "inline"
+</IfModule>

@@ -1,0 +1,13 @@
+# Never commit live credentials
+app/config.php
+
+# User uploads and runtime state
+uploads/*
+!uploads/.htaccess
+storage/*
+!storage/.htaccess
+
+# One-time installer must not ship in a deploy
+install.php
+
+*.zip
