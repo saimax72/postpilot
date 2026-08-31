@@ -64,14 +64,17 @@ if ($action === 'save') {
         json_fail('Pick a date and a time for this post.');
     }
 
+    $now = !empty($_POST['publish_now']);
+
     try {
-        $scheduledUtc = local_to_utc("$date $time", $tz);
+        // "Post now" ignores whatever is in the date and time fields.
+        $scheduledUtc = $now ? gmdate('Y-m-d H:i:s') : local_to_utc("$date $time", $tz);
     } catch (Exception $e) {
         json_fail('That date and time could not be read.');
     }
 
     // Scheduling into the past only makes sense for drafts.
-    if ($status === 'scheduled' && strtotime($scheduledUtc . ' UTC') < time() - 60) {
+    if (!$now && $status === 'scheduled' && strtotime($scheduledUtc . ' UTC') < time() - 60) {
         json_fail('That time has already passed. Pick a future slot, or save it as a draft.');
     }
 
@@ -133,6 +136,35 @@ if ($action === 'save') {
     // Track which templates actually get used, so the list can be ordered by it later.
     if ($tplId = (int)($_POST['template_id'] ?? 0)) {
         template_used($tplId, $uid);
+    }
+
+    /*
+     * Post now: publish inline instead of waiting for the worker. Claimed with
+     * the same conditional update the worker uses, so an overlapping cron run
+     * cannot send it twice.
+     */
+    if ($now) {
+        @set_time_limit(120);   // container polling can take up to ~45s
+
+        $claimed = db_run(
+            "UPDATE posts SET status = 'publishing', attempts = attempts + 1
+             WHERE id = ? AND status = 'scheduled'",
+            [$result]
+        )->rowCount();
+
+        if (!$claimed) {
+            json_out(['ok' => true, 'id' => $result, 'published' => false,
+                      'message' => 'The worker picked this post up first — check the queue for the outcome.']);
+        }
+
+        $res = publish_post((int)$result);
+
+        json_out([
+            'ok'        => true,
+            'id'        => $result,
+            'published' => (bool)$res['ok'],
+            'message'   => $res['ok'] ? 'Published.' : $res['message'],
+        ]);
     }
 
     json_out(['ok' => true, 'id' => $result]);

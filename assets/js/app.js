@@ -734,6 +734,26 @@
       el.classList.remove('hide');
     },
 
+    /**
+     * Publish immediately rather than queueing. The request holds open while
+     * the server talks to the network - up to a minute if Instagram is slow
+     * to accept the media - so the button reports progress rather than
+     * looking hung.
+     */
+    postNow: function () {
+      if (!confirm('Publish this post right now? It will go out immediately, not at the scheduled time.')) return;
+      $('#c-publish-now').value = '1';
+      $('#c-status').value = 'scheduled';
+      this.andAnother = false;
+
+      var btn = $('#c-now');
+      btn.dataset.label = btn.textContent.trim();
+      btn.textContent = 'Publishing…';
+
+      var form = $('#composer-form');
+      form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
+    },
+
     save: function (status, again) {
       $('#c-status').value = status || 'scheduled';
       this.andAnother = !!again;
@@ -747,6 +767,7 @@
       var form = $('#composer-form');
       var btns = $$('button', form);
       btns.forEach(function (b) { b.disabled = true; });
+      var immediate = $('#c-publish-now').value === '1';
 
       fetch('/api/posts.php?action=save', {
         method: 'POST',
@@ -757,11 +778,27 @@
       .then(function (data) {
         btns.forEach(function (b) { b.disabled = false; });
 
+        var nowBtn = $('#c-now');
+        if (nowBtn && nowBtn.dataset.label) nowBtn.textContent = nowBtn.dataset.label;
+        $('#c-publish-now').value = '';
+
         if (!data.ok) {
           var box = $('#c-error');
           box.textContent = data.error || 'Could not save the post.';
           box.classList.remove('hide');
           box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+
+        // Post now reports the network's verdict here rather than leaving it
+        // to be discovered in the queue ten minutes later.
+        if (immediate) {
+          if (data.published) {
+            Composer.note('Published. Check the account to confirm it landed.');
+            Composer.pendingReload = true;
+          } else {
+            Composer.fail('Not published — ' + (data.message || 'the network refused it.'));
+          }
           return;
         }
 

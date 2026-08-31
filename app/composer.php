@@ -17,6 +17,7 @@
       <input type="hidden" name="crop_fh" id="c-crop-fh" value="1">
       <input type="hidden" name="status"         id="c-status" value="scheduled">
       <input type="hidden" name="template_id"   id="c-template-id" value="">
+      <input type="hidden" name="publish_now"   id="c-publish-now" value="">
 
       <div class="modal-head">
         <h2 id="composer-title">New post</h2>
@@ -248,6 +249,10 @@
             Save as template
           </button>
           <button type="button" class="btn btn-ghost" onclick="Composer.save('draft')">Draft</button>
+          <button type="button" class="btn btn-ghost" id="c-now" onclick="Composer.postNow()"
+                  title="Publish straight away instead of waiting for the scheduler">
+            Post now
+          </button>
           <button type="button" class="btn btn-soft" onclick="Composer.save('scheduled', true)"
                   title="Schedule this one and immediately start the next with the same caption">
             Schedule &amp; add another
