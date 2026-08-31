@@ -193,16 +193,34 @@ function drive_facebook(array $post, array $target, string $token): array
     return ['ok' => false, 'error' => graph_error($res)];
 }
 
+/**
+ * Meta ships two Instagram publishing APIs and they are not interchangeable:
+ *
+ *  - Instagram API with Instagram Login  -> graph.instagram.com, tokens start "IG"
+ *  - Instagram API with Facebook Login   -> graph.facebook.com,  tokens start "EAA"
+ *
+ * Both expose the same container-then-publish endpoints, so the only thing
+ * that differs is the host. The token prefix tells us which one we hold,
+ * which beats asking the user to classify their own credentials.
+ */
+function instagram_host(string $token): string
+{
+    return str_starts_with($token, 'IG')
+        ? 'https://graph.instagram.com/v21.0'
+        : 'https://graph.facebook.com/v21.0';
+}
+
 /** Instagram: create a media container, then publish it. external_id = IG user ID. */
 function drive_instagram(array $post, array $target, string $token): array
 {
     $igId  = $target['external_id'];
     $media = absolute_media_url($post['media_path']);
+    $host  = instagram_host($token);
 
     if (!$igId)  return ['ok' => false, 'error' => 'Instagram account ID missing on the connected account.'];
     if (!$media) return ['ok' => false, 'error' => 'Instagram requires an image or video.'];
 
-    $create = http_post("https://graph.facebook.com/v21.0/{$igId}/media", array_filter([
+    $create = http_post("{$host}/{$igId}/media", array_filter([
         'image_url'    => is_video($post['media_path']) ? null : $media,
         'video_url'    => is_video($post['media_path']) ? $media : null,
         'media_type'   => is_video($post['media_path']) ? 'REELS' : null,
@@ -215,7 +233,7 @@ function drive_instagram(array $post, array $target, string $token): array
         return ['ok' => false, 'error' => graph_error($create)];
     }
 
-    $publish = http_post("https://graph.facebook.com/v21.0/{$igId}/media_publish", [
+    $publish = http_post("{$host}/{$igId}/media_publish", [
         'creation_id'  => $create['id'],
         'access_token' => $token,
     ]);
@@ -224,7 +242,7 @@ function drive_instagram(array $post, array $target, string $token): array
         // First comment is best-effort: the post is already live, so a failure
         // here must not mark the whole thing failed.
         if (!empty($post['first_comment'])) {
-            http_post("https://graph.facebook.com/v21.0/{$publish['id']}/comments", [
+            http_post("{$host}/{$publish['id']}/comments", [
                 'message'      => $post['first_comment'],
                 'access_token' => $token,
             ]);
