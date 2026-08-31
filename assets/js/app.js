@@ -746,7 +746,63 @@
 
   /* ------------------------------------------------------------- wiring up  */
 
+  /* ==========================================================================
+     Countdowns
+
+     Every element carrying data-at (a UTC timestamp) gets a live "in 3d 4h".
+     Rendered client-side because it has to keep moving, and because the
+     viewer's clock is the one that matters.
+     ========================================================================== */
+
+  function humanGap(ms) {
+    var s = Math.round(ms / 1000);
+    var d = Math.floor(s / 86400);
+    var h = Math.floor((s % 86400) / 3600);
+    var m = Math.floor((s % 3600) / 60);
+
+    if (d > 0) return d + 'd' + (h ? ' ' + h + 'h' : '');
+    if (h > 0) return h + 'h' + (m ? ' ' + m + 'm' : '');
+    if (m > 0) return m + 'm';
+    return 'under a minute';
+  }
+
+  function tickCountdowns() {
+    var now = Date.now();
+
+    $$('[data-at]').forEach(function (el) {
+      var at = Date.parse(el.dataset.at);
+      if (isNaN(at)) return;
+
+      var status = el.dataset.status || 'scheduled';
+      var gap = at - now;
+
+      el.classList.remove('eta-soon', 'eta-late', 'eta-done');
+
+      if (status === 'published') {
+        el.textContent = 'published';
+        el.classList.add('eta-done');
+      } else if (status === 'draft') {
+        el.textContent = 'draft';
+      } else if (status === 'failed') {
+        el.textContent = 'failed';
+        el.classList.add('eta-late');
+      } else if (gap <= 0) {
+        // Past its slot but not published: the worker has not picked it up yet.
+        el.textContent = 'due ' + humanGap(-gap) + ' ago';
+        el.classList.add('eta-late');
+      } else {
+        el.textContent = 'in ' + humanGap(gap);
+        if (gap < 3600 * 1000) el.classList.add('eta-soon');
+      }
+    });
+  }
+
+  window.tickCountdowns = tickCountdowns;
+
   document.addEventListener('DOMContentLoaded', function () {
+
+    tickCountdowns();
+    setInterval(tickCountdowns, 30000);
 
     var form = $('#composer-form');
     if (!form) return;

@@ -7,7 +7,7 @@ $uid  = (int)$user['id'];
 $tz   = new DateTimeZone(user_tz());
 
 $view = $_GET['view'] ?? 'month';
-if (!in_array($view, ['month', 'week'], true)) {
+if (!in_array($view, ['month', 'week', 'list'], true)) {
     $view = 'month';
 }
 $today = new DateTime('now', $tz);
@@ -22,6 +22,7 @@ if ($view === 'week') {
     $prev      = (clone $gridStart)->modify('-7 days')->format('Y-m-d');
     $next      = (clone $gridStart)->modify('+7 days')->format('Y-m-d');
 } else {
+    // Month and list share a window so the prev/next controls behave the same.
     $anchor = DateTime::createFromFormat('Y-m-d', ($_GET['m'] ?? $today->format('Y-m')) . '-01', $tz) ?: clone $today;
     $anchor->setTime(0, 0);
     $monthStart = (clone $anchor)->modify('first day of this month');
@@ -82,9 +83,9 @@ layout_head('Calendar', 'Calendar', $actions);
     <h2 class="cal-title"><?= e($title) ?></h2>
   </div>
   <span class="seg">
-    <a class="<?= $view === 'month' ? 'on' : '' ?>" href="?view=month">Month</a>
+    <a class="<?= $view === 'month' ? 'on' : '' ?>" href="?view=month&amp;m=<?= e($anchor->format('Y-m')) ?>">Month</a>
     <a class="<?= $view === 'week'  ? 'on' : '' ?>" href="?view=week">Week</a>
-    <a href="/queue.php">List</a>
+    <a class="<?= $view === 'list'  ? 'on' : '' ?>" href="?view=list&amp;m=<?= e($anchor->format('Y-m')) ?>">List</a>
   </span>
 </div>
 
@@ -108,7 +109,9 @@ function ev_chip(array $p): string
     }
 
     $out .= '<span class="ev-main">';
-    $out .= '<span class="ev-time">' . $p['local']->format('H:i') . '</span>';
+    $out .= '<span class="ev-time">' . $p['local']->format('H:i')
+          . ' <span class="ev-eta" data-at="' . e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC')))
+          . '" data-status="' . e($p['status']) . '"></span></span>';
     $out .= '<span class="ev-text">' . e(str_limit($p['content'] ?: 'Media post', 40)) . '</span>';
     $out .= '<span class="ev-icons">';
     foreach (array_unique(array_column($p['targets'], 'platform')) as $plat) {
@@ -151,6 +154,93 @@ $todayKey = $today->format('Y-m-d');
     </div>
   </div>
 
+<?php elseif ($view === 'list'): ?>
+
+  <?php if (!$byDay): ?>
+    <div class="card card-pad center" style="padding:56px 24px">
+      <div class="empty-badge"><?= icon('list', 26) ?></div>
+      <h3>Nothing scheduled in <?= e($anchor->format('F Y')) ?></h3>
+      <p class="muted">Use the arrows above to look at another month, or write a post.</p>
+      <button class="btn" onclick="Composer.open()"><?= icon('plus', 16) ?> New post</button>
+    </div>
+  <?php else: ?>
+    <div class="stack" style="gap:20px">
+      <?php
+      ksort($byDay);
+      foreach ($byDay as $key => $items):
+          $d = new DateTime($key, $tz);
+          $isToday = $key === $today->format('Y-m-d');
+      ?>
+        <div class="card">
+          <div class="card-head">
+            <div class="row">
+              <h3 style="margin:0"><?= e($d->format('l j F')) ?></h3>
+              <?php if ($isToday): ?><span class="badge badge-scheduled">today</span><?php endif; ?>
+              <span class="badge"><?= count($items) ?> post<?= count($items) === 1 ? '' : 's' ?></span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="Composer.open(null, '<?= $key ?>')">
+              <?= icon('plus', 14) ?> Add to this day
+            </button>
+          </div>
+
+          <?php foreach ($items as $p):
+              $tags = extract_hashtags((string)$p['content']);
+              $ratio = $p['media_ratio'] ? (media_ratio($p['media_ratio'])['label'] ?? null) : null;
+          ?>
+            <div class="lv-row" onclick="Composer.open(<?= (int)$p['id'] ?>)">
+              <?php if ($p['media_path']): ?>
+                <?php if (is_video($p['media_path'])): ?>
+                  <video class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" muted playsinline preload="metadata"></video>
+                <?php else: ?>
+                  <img class="lv-thumb" src="<?= e(media_url($p['media_path'])) ?>" alt="" loading="lazy">
+                <?php endif; ?>
+              <?php else: ?>
+                <span class="lv-thumb lv-thumb-empty"><?= icon('image', 20) ?></span>
+              <?php endif; ?>
+
+              <div class="lv-when">
+                <div class="lv-time"><?= e($p['local']->format('H:i')) ?></div>
+                <div class="lv-eta" data-at="<?= e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC'))) ?>"
+                     data-status="<?= e($p['status']) ?>"></div>
+              </div>
+
+              <div class="lv-body">
+                <p class="lv-caption"><?= e(str_limit($p['content'] ?: 'Media post', 180)) ?></p>
+
+                <div class="lv-meta">
+                  <?php foreach ($p['targets'] as $t): ?>
+                    <span class="chip">
+                      <span class="pdot pdot-sm" style="background:<?= e(platform_color($t['platform'])) ?>">
+                        <?= platform_icon($t['platform'], 10) ?>
+                      </span><?= e($t['display_name'] ?: platform_label($t['platform'])) ?>
+                    </span>
+                  <?php endforeach; ?>
+
+                  <?php if ($ratio): ?><span class="chip"><?= e($ratio) ?></span><?php endif; ?>
+                  <?php if ($tags): ?><span class="chip"><?= count($tags) ?> hashtags</span><?php endif; ?>
+                  <?php if ($p['link_url']): ?><span class="chip"><?= icon('link', 11) ?> link</span><?php endif; ?>
+                  <?php if (!empty($p['first_comment'])): ?><span class="chip">first comment</span><?php endif; ?>
+                  <?php if (!empty($p['alt_text'])): ?><span class="chip">alt text</span><?php endif; ?>
+                </div>
+
+                <?php if ($p['status'] === 'failed' && $p['last_error']): ?>
+                  <div class="tiny" style="color:var(--red);margin-top:6px"><?= e(str_limit($p['last_error'], 160)) ?></div>
+                <?php endif; ?>
+              </div>
+
+              <div class="lv-side">
+                <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
+                <?php if ($p['status'] === 'published' && $p['published_at']): ?>
+                  <span class="tiny muted"><?= e(time_ago($p['published_at'])) ?></span>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+
 <?php else: ?>
 
   <div class="week-grid" id="cal-grid">
@@ -175,7 +265,7 @@ $todayKey = $today->format('Y-m-d');
 
 <p class="small muted" style="margin-top:16px">
   Times shown in <strong><?= e(str_replace('_', ' ', user_tz())) ?></strong>.
-  Drag a post onto another day to move it.
+  <?= $view === 'list' ? 'Click a post to edit it.' : 'Drag a post onto another day to move it.' ?>
 </p>
 
 <?php

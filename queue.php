@@ -91,6 +91,8 @@ layout_head('Queue', 'Queue', $actions);
             <td class="nowrap">
               <strong><?= e(utc_to_local($p['scheduled_at'], $tz, 'j M Y')) ?></strong>
               <div class="tiny muted"><?= e(utc_to_local($p['scheduled_at'], $tz, 'H:i')) ?></div>
+              <div class="lv-eta" data-at="<?= e(gmdate('c', strtotime($p['scheduled_at'] . ' UTC'))) ?>"
+                   data-status="<?= e($p['status']) ?>"></div>
             </td>
             <td>
               <div class="row" style="align-items:flex-start">
