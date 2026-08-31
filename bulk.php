@@ -200,6 +200,6 @@ $payload = '<script>window.BULK = ' . json_encode([
         'accounts' => $t['account_list'],
     ], $templates),
 ], JSON_UNESCAPED_SLASHES) . ';</script>'
-. '<script src="/assets/js/bulk.js?v=1"></script>';
+. '<script src="' . asset('/assets/js/bulk.js') . '"></script>';
 
 layout_foot($payload);

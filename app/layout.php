@@ -58,7 +58,7 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="stylesheet" href="<?= asset('/assets/css/app.css') ?>">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%233730a3'/><path d='M25 60 L50 30 L75 60' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <script>
   (function () {

@@ -374,5 +374,5 @@ function composer_payload(array $posts, array $accounts, string $tz): string
     ];
 
     return '<script>window.PP = ' . json_encode($data, JSON_UNESCAPED_SLASHES) . ';</script>'
-         . '<script src="/assets/js/app.js?v=4"></script>';
+         . '<script src="' . asset('/assets/js/app.js') . '"></script>';
 }

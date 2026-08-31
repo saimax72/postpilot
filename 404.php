@@ -9,7 +9,7 @@ http_response_code(404);
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Not found · <?= e(APP_NAME) ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="stylesheet" href="<?= asset('/assets/css/app.css') ?>">
 </head>
 <body>
 <div class="wrap" style="min-height:100vh;display:grid;place-items:center;text-align:center">
