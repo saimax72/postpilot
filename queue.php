@@ -27,19 +27,61 @@ if (!empty($_GET['date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date']))
     $params[] = local_to_utc($_GET['date'] . ' 23:59', $tz);
 }
 
+// Order by what happens next: upcoming posts soonest-first, then past posts
+// most-recent-first. Plain DESC buried the next post below months of history.
 $posts = attach_targets(db_all(
-    'SELECT * FROM posts WHERE ' . implode(' AND ', $where) . ' ORDER BY scheduled_at DESC LIMIT 200',
+    'SELECT * FROM posts WHERE ' . implode(' AND ', $where) . '
+     ORDER BY (scheduled_at >= UTC_TIMESTAMP()) DESC,
+              CASE WHEN scheduled_at >= UTC_TIMESTAMP() THEN scheduled_at END ASC,
+              scheduled_at DESC
+     LIMIT 200',
     $params
 ));
 
 $accounts = accounts_for_user($uid);
 $stats    = post_stats($uid);
 
+// The next post that will actually go out, regardless of the current filter -
+// the queue's most useful single fact.
+$next = db_one(
+    "SELECT * FROM posts
+     WHERE user_id = ? AND status = 'scheduled' AND scheduled_at >= UTC_TIMESTAMP()
+     ORDER BY scheduled_at ASC LIMIT 1",
+    [$uid]
+);
+if ($next) {
+    $next = attach_targets([$next])[0];
+}
+
 $actions = '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('calendar', 15) . ' Calendar</a>'
          . '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>';
 
 layout_head('Queue', 'Queue', $actions);
 ?>
+
+<?php if ($next): ?>
+  <div class="next-up" onclick="Composer.open(<?= (int)$next['id'] ?>)">
+    <?php if ($next['media_path']): ?>
+      <img class="next-thumb" src="<?= e(media_url($next['media_path'])) ?>" alt="">
+    <?php else: ?>
+      <span class="next-thumb next-thumb-empty"><?= icon('image', 18) ?></span>
+    <?php endif; ?>
+
+    <div class="grow" style="min-width:0">
+      <div class="tiny" style="text-transform:uppercase;letter-spacing:.1em;opacity:.75">Next to publish</div>
+      <div class="next-caption"><?= e(str_limit($next['content'] ?: 'Media post', 90)) ?></div>
+      <div class="tiny" style="opacity:.8;margin-top:3px">
+        <?= e(utc_to_local($next['scheduled_at'], $tz, 'D j M')) ?> at <?= e(utc_to_local($next['scheduled_at'], $tz, 'H:i')) ?>
+        <?php foreach (array_unique(array_column($next['targets'], 'platform')) as $plat): ?>
+          · <?= e(platform_label($plat)) ?>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <div class="next-eta" data-at="<?= e(gmdate('c', strtotime($next['scheduled_at'] . ' UTC'))) ?>"
+         data-status="scheduled"></div>
+  </div>
+<?php endif; ?>
 
 <div class="cal-toolbar">
   <span class="seg">

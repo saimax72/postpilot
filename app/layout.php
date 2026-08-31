@@ -115,7 +115,16 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
         <button class="btn btn-ghost btn-icon menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Menu"><?= icon('menu') ?></button>
         <h1><?= e($heading !== '' ? $heading : $title) ?></h1>
       </div>
-      <div class="row"><?= $actions ?></div>
+      <div class="row">
+        <?php if ($user): ?>
+          <span class="clock" id="now-clock" data-tz="<?= e($user['timezone']) ?>"
+                title="Current time in your workspace timezone">
+            <span class="clock-time">--:--</span>
+            <span class="clock-zone"><?= e(str_replace('_', ' ', $user['timezone'])) ?></span>
+          </span>
+        <?php endif; ?>
+        <?= $actions ?>
+      </div>
     </header>
 
     <main class="page">
@@ -132,6 +141,33 @@ function layout_foot(string $extraJs = ''): void
   </div>
 </div>
 <script>
+/**
+ * Workspace clock. Formatted in the user's timezone rather than the browser's,
+ * so the time here always matches the times on the calendar - which is the
+ * whole point of showing it.
+ */
+(function () {
+  var el = document.getElementById('now-clock');
+  if (!el) return;
+
+  var tz = el.dataset.tz || 'UTC';
+  var fmt;
+  try {
+    fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    });
+  } catch (e) {
+    fmt = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    });
+  }
+
+  var out = el.querySelector('.clock-time');
+  function tick() { out.textContent = fmt.format(new Date()); }
+  tick();
+  setInterval(tick, 1000);
+})();
+
 function toggleTheme() {
   var el = document.documentElement;
   var next = el.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';

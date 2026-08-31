@@ -954,3 +954,57 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .is-sent .crop-frame { cursor: default; }
 .is-sent .ratio-btn:disabled { opacity: .55; cursor: default; }
+
+/* ---------- Workspace clock ---------- */
+
+.clock {
+  display: flex; flex-direction: column; align-items: flex-end;
+  line-height: 1.15; padding-right: 14px; margin-right: 4px;
+  border-right: 1px solid var(--line);
+}
+.clock-time {
+  font-family: var(--display); font-size: 1.25rem;
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+.clock-zone {
+  font-size: .625rem; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ---------- Queue: next to publish ---------- */
+
+.next-up {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 20px; margin-bottom: 20px;
+  border-radius: var(--r-lg); cursor: pointer;
+  background: linear-gradient(135deg, var(--brand), #4f46b8 70%, var(--brand-700));
+  color: #fff; box-shadow: var(--shadow);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.next-up:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+.next-thumb {
+  width: 56px; height: 56px; flex: none;
+  border-radius: var(--r-sm); object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, .25);
+}
+.next-thumb-empty {
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .7);
+}
+.next-caption {
+  font-weight: 600; font-size: .9375rem; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.next-eta {
+  flex: none; font-family: var(--display); font-size: 1.5rem;
+  letter-spacing: -.01em; white-space: nowrap;
+}
+/* The countdown colours are tuned for light backgrounds; override on the band. */
+.next-eta.eta-soon, .next-eta.eta-late, .next-eta.eta-done { color: #fff; }
+
+@media (max-width: 640px) {
+  .clock-zone { display: none; }
+  .next-up { flex-wrap: wrap; }
+  .next-eta { font-size: 1.25rem; }
+}
