@@ -1774,31 +1774,33 @@ table.data tbody tr:hover { background: var(--line-soft); }
 
 /* ---------- Decorative page banners ---------- */
 
-/* Height is fixed and width follows the image, so every banner lines up across
-   the app without any of them being stretched. The art is cropped to its
-   content, so this is close to half what an uncropped strip would occupy. */
+/* One box for every banner, so they line up from page to page. The art ranges
+   from 3.75:1 to 6.8:1, so the taller pieces are cropped to this shape rather
+   than being letterboxed or stretched; where each crop sits is set per image
+   in page_banner(). aspect-ratio rather than a fixed height keeps that crop
+   identical as the window narrows. */
 .page-banner {
-  /* 140 rather than 150: the workflow-icon strip is the shortest source at
-     128px tall, and this keeps its upscale to 1.09x instead of 1.17x. */
-  --banner-h: 140px;
+  width: 100%;
+  max-width: 1060px;
+  aspect-ratio: 1060 / 156;
   margin: 0 0 22px;
   border-radius: 14px;
   overflow: hidden;
 }
+
 .page-banner img {
   display: block;
-  height: var(--banner-h);
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 
-  /* Rather than boxing the near-white artwork in a card, mask its edges and let
-     it dissolve into the page. Gentler at the bottom than a taller strip could
-     afford, so the subjects are not half dissolved. */
+  /* Rather than boxing the near-white artwork in a card, mask its edges and
+     let it dissolve into the page. */
   -webkit-mask-image:
-    linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%),
+    linear-gradient(to bottom, #000 0%, #000 66%, transparent 100%),
     linear-gradient(to right, transparent 0%, #000 6%, #000 92%, transparent 100%);
   mask-image:
-    linear-gradient(to bottom, #000 0%, #000 68%, transparent 100%),
+    linear-gradient(to bottom, #000 0%, #000 66%, transparent 100%),
     linear-gradient(to right, transparent 0%, #000 6%, #000 92%, transparent 100%);
   -webkit-mask-composite: source-in;   /* Safari's older keyword set */
           mask-composite: intersect;
@@ -1809,10 +1811,6 @@ table.data tbody tr:hover { background: var(--line-soft); }
 [data-theme="dark"] .page-banner img {
   opacity: .82;
   filter: brightness(.86) contrast(1.04);
-}
-
-@media (max-width: 900px) {
-  .page-banner { --banner-h: 112px; }
 }
 
 /* Below tablet width the banner is more height than it is worth. */

@@ -59,32 +59,34 @@ function brand_logo(): string
 /**
  * A decorative banner across the top of a page.
  *
- * The source art has been cropped to its content, so the height here is set and
- * the width follows each image's own proportions. That keeps every banner the
- * same height across the app while none of them is stretched: a row of icons
- * ends up wide, a desk scene ends up narrower, and both sit on the same line.
+ * Every banner is drawn in the same wide, short box so they line up across the
+ * app. The source art is not all the same shape - it runs from 3.75:1 to
+ * 6.8:1 - so the taller ones are cropped to fit.
+ *
+ * The number below is where that crop sits vertically, chosen per image by
+ * looking at the result: a window picked purely by "most content retained"
+ * kept sliced-in-half icons, which reads worse than losing one icon cleanly.
  *
  * Marked aria-hidden: these carry no information the page heading does not
  * already give, so announcing them would only be noise.
  */
 function page_banner(string $name): string
 {
-    // name => [intrinsic width, intrinsic height] after cropping
-    $sizes = [
-        'banner-01-calendar-platforms' => [1756, 278],
-        'banner-02-calendar-mobile'    => [869, 193],
-        'banner-03-workflow-icons'     => [869, 128],
-        'banner-04-global-analytics'   => [869, 215],
-        'banner-05-calendar-desk'      => [869, 232],
+    // name => vertical focus of the crop, as a percentage from the top
+    $focus = [
+        'banner-01-calendar-platforms' => 60,
+        'banner-02-calendar-mobile'    => 8,
+        'banner-03-workflow-icons'     => 50,
+        'banner-04-global-analytics'   => 55,
+        'banner-05-calendar-desk'      => 60,
     ];
-    if (!isset($sizes[$name])) {
+    if (!isset($focus[$name])) {
         return '';
     }
-    [$w, $h] = $sizes[$name];
 
     return '<figure class="page-banner" aria-hidden="true">'
          . '<img src="' . asset('/assets/img/banners/' . $name . '.webp') . '" alt=""'
-         . ' width="' . $w . '" height="' . $h . '" decoding="async">'
+         . ' style="object-position:50% ' . $focus[$name] . '%" decoding="async">'
          . '</figure>';
 }
 
