@@ -60,7 +60,8 @@ foreach ($accounts as $a) {
 }
 
 layout_head('Accounts', 'Connected accounts',
-    '<button class="btn" onclick="document.getElementById(\'connect\').classList.toggle(\'hide\')">'
+    '<a class="btn btn-ghost" href="/connect.php">' . icon('help', 16) . ' Setup guide</a>'
+    . '<button class="btn" onclick="document.getElementById(\'connect\').classList.toggle(\'hide\')">'
     . icon('plus', 16) . ' Connect account</button>');
 ?>
 
@@ -105,7 +106,8 @@ layout_head('Accounts', 'Connected accounts',
           <?= icon('zap', 16) ?>
           <span>Leave these blank to run in <strong>demo mode</strong> — posts still move through the whole
           schedule-and-publish pipeline, they just are not sent to the network. Paste a real access token
-          once your developer app is approved and PostPilot will start publishing for real.</span>
+          once your developer app is approved and PostPilot will start publishing for real.<br>
+          <a href="/connect.php"><strong>Step-by-step guide to getting these values &rarr;</strong></a></span>
         </div>
         <div class="row" style="gap:16px;align-items:flex-start;flex-wrap:wrap">
           <label class="field grow" style="min-width:240px">
@@ -138,9 +140,15 @@ layout_head('Accounts', 'Connected accounts',
     </div>
     <h3>No channels yet</h3>
     <p class="muted">Connect the profiles and pages you post from. You can add as many as you like.</p>
-    <button class="btn" onclick="document.getElementById('connect').classList.remove('hide')">
-      <?= icon('plus', 16) ?> Connect your first account
-    </button>
+    <div class="row" style="justify-content:center">
+      <button class="btn" onclick="document.getElementById('connect').classList.remove('hide')">
+        <?= icon('plus', 16) ?> Connect your first account
+      </button>
+      <a class="btn btn-ghost" href="/connect.php"><?= icon('help', 16) ?> Read the setup guide</a>
+    </div>
+    <p class="small muted" style="margin:16px 0 0">
+      Not ready to deal with API tokens? Connect one in demo mode and build your calendar first.
+    </p>
   </div>
 
 <?php else: ?>

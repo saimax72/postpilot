@@ -1666,3 +1666,48 @@ table.data tbody tr:hover { background: var(--line-soft); }
   text-align: center; margin: 0 auto 6px;
   max-width: 56ch; font-size: .9375rem; color: var(--muted);
 }
+
+/* ==========================================================================
+   Connection guide
+   ========================================================================== */
+
+/* The illustrations scale with the card and scroll rather than squash, since a
+   flow diagram that has been crushed to phone width explains nothing. */
+.guide-art {
+  display: block; width: 100%; height: auto;
+  max-width: 620px; margin: 20px 0 24px;
+  overflow: visible;
+}
+
+.guide-steps { list-style: none; padding: 0; margin: 4px 0 20px; display: grid; gap: 18px; }
+
+.guide-step { display: flex; gap: 14px; align-items: flex-start; }
+.guide-step h4 { margin: 1px 0 4px; font-size: .9375rem; font-weight: 650; }
+.guide-step p  { margin: 0; font-size: .875rem; color: var(--muted); line-height: 1.55; }
+.guide-step code {
+  font-size: .8125rem; padding: 1px 5px; border-radius: 4px;
+  background: var(--line-soft); color: var(--ink-2);
+}
+
+.guide-n {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: .8125rem; font-weight: 700;
+  background: var(--brand-50); color: var(--brand);
+}
+
+.guide-gotchas { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 7px; }
+.guide-gotchas li { font-size: .8125rem; line-height: 1.5; }
+
+.guide-faq { margin: 0; }
+.guide-faq dt {
+  font-weight: 650; font-size: .875rem; margin-top: 16px;
+}
+.guide-faq dt:first-child { margin-top: 0; }
+.guide-faq dd {
+  margin: 5px 0 0; font-size: .875rem; color: var(--muted); line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .guide-art { max-width: none; }
+}
