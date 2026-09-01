@@ -172,9 +172,12 @@ layout_head('Bulk upload', 'Bulk upload',
         </div>
         <input type="file" id="b-files" accept="image/*,video/mp4,video/quicktime" multiple class="hide">
 
-        <div class="bulk-progress hide" id="b-progress">
+        <div class="bulk-progress hide" id="b-progress" role="status" aria-live="polite">
           <div class="bulk-bar"><span id="b-bar"></span></div>
-          <div class="tiny muted" id="b-progress-text"></div>
+          <div class="bulk-progress-row">
+            <span class="label-text" id="b-progress-text"></span>
+            <span class="pct" id="b-progress-pct">0%</span>
+          </div>
         </div>
 
         <div class="bulk-grid" id="b-grid"></div>

@@ -825,14 +825,58 @@ table.data tbody tr:hover { background: var(--line-soft); }
 
 /* ---------- Bulk upload ---------- */
 
-.bulk-progress { margin-top: 16px; }
-.bulk-bar {
-  height: 5px; border-radius: 99px; background: var(--line-soft); overflow: hidden; margin-bottom: 6px;
+.bulk-progress {
+  margin-top: 18px; padding: 16px 18px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--card); box-shadow: var(--shadow-sm);
 }
+
+.bulk-bar {
+  height: 16px; border-radius: 99px;
+  background: var(--line-soft); overflow: hidden; margin-bottom: 10px;
+  box-shadow: inset 0 1px 2px rgba(20, 22, 28, .07);
+}
+
 .bulk-bar span {
   display: block; height: 100%; width: 0;
-  background: linear-gradient(90deg, var(--brand), var(--gold));
-  transition: width .2s ease;
+  border-radius: 99px; position: relative; overflow: hidden;
+  background: linear-gradient(90deg, var(--brand), #6d63e6 55%, var(--gold));
+  transition: width .45s cubic-bezier(.2, .8, .3, 1);
+}
+
+/* Moving stripes: the bar only steps forward as each post lands, so without
+   motion a slow network looks like a stall. */
+.bulk-bar span::after {
+  content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(115deg,
+    rgba(255, 255, 255, .30) 25%, transparent 25%,
+    transparent 50%, rgba(255, 255, 255, .30) 50%,
+    rgba(255, 255, 255, .30) 75%, transparent 75%);
+  background-size: 28px 28px;
+  animation: bulk-stripes .9s linear infinite;
+}
+
+@keyframes bulk-stripes {
+  from { background-position: 0 0; }
+  to   { background-position: 28px 0; }
+}
+
+.bulk-progress-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+}
+.bulk-progress-row .label-text {
+  font-size: .9375rem; font-weight: 600; color: var(--ink);
+}
+.bulk-progress-row .pct {
+  font-family: var(--display); font-size: 1.375rem;
+  letter-spacing: -.01em; color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A live region should not also be a light show. */
+@media (prefers-reduced-motion: reduce) {
+  .bulk-bar span::after { animation: none; }
+  .bulk-bar span { transition: none; }
 }
 
 .bulk-grid {

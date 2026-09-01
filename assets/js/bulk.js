@@ -36,6 +36,20 @@
     return coverBox(it.w, it.h, ratioValue());
   }
 
+  /**
+   * Drive the progress bar. `done` counts finished items; the bar is nudged
+   * half a step ahead while one is in flight, so a slow item still shows
+   * forward movement rather than sitting on the previous number.
+   */
+  function progress(done, total, label, inFlight) {
+    var frac = total ? (done + (inFlight ? 0.5 : 0)) / total : 0;
+    var pct  = Math.min(100, Math.round(frac * 100));
+
+    $('#b-bar').style.width = pct + '%';
+    $('#b-progress-pct').textContent = pct + '%';
+    $('#b-progress-text').textContent = label;
+  }
+
   var Bulk = {
 
     items: [],       // { path, url, name, video, caption }
@@ -55,6 +69,7 @@
 
       this.busy = true;
       $('#b-progress').classList.remove('hide');
+      progress(0, list.length, 'Preparing…', true);
       $('#b-go').disabled = true;
 
       var self = this, done = 0, failures = [];
@@ -96,9 +111,7 @@
           .then(function () {
             done++;
             var total = done + list.length;
-            var pct = Math.round((done / total) * 100);
-            $('#b-bar').style.width = pct + '%';
-            $('#b-progress-text').textContent = 'Uploading ' + done + ' of ' + total + '…';
+            progress(done, total, 'Uploading ' + done + ' of ' + total, list.length > 0);
             self.render();
             next();
           });
@@ -363,6 +376,7 @@
       btn.disabled = true;
       $('#b-go').disabled = true;
       $('#b-progress').classList.remove('hide');
+      progress(0, total, 'Starting…', true);
 
       function step() {
         if (!queue.length) {
@@ -384,8 +398,7 @@
         var idx = self.items.indexOf(it);
 
         self.mark(idx, 'working', 'posting…');
-        $('#b-progress-text').textContent = 'Publishing ' + (done + 1) + ' of ' + total + '…';
-        $('#b-bar').style.width = Math.round((done / total) * 100) + '%';
+        progress(done, total, 'Publishing ' + (done + 1) + ' of ' + total, true);
 
         fetch('/api/bulk.php?action=publish_one', {
           method: 'POST',
@@ -418,6 +431,9 @@
         })
         .then(function () {
           done++;
+          progress(done, total, done === total
+            ? 'Finished ' + done + ' of ' + total
+            : 'Publishing ' + (done + 1) + ' of ' + total, done < total);
           // A breath between posts - the networks throttle bursts.
           setTimeout(step, 1500);
         });
