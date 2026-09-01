@@ -12,7 +12,29 @@
   var $  = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
-  var CFG = window.BULK || { templates: [] };
+  var CFG = window.BULK || { templates: [], ratios: {} };
+
+  var RATIOS = CFG.ratios || { square: 1, portrait: 0.8, landscape: 1.91, story: 0.5625 };
+
+  function ratioValue() { return RATIOS[($('#b-ratio') || {}).value] || 1; }
+
+  /** The centred crop for an image at a ratio - mirrors cover_box() in PHP. */
+  function coverBox(w, h, r) {
+    var src = w / Math.max(1, h);
+    if (src > r) {
+      var fw = r / src;
+      return { fx: (1 - fw) / 2, fy: 0, fw: fw, fh: 1 };
+    }
+    var fh = src / r;
+    return { fx: 0, fy: (1 - fh) / 2, fw: 1, fh: fh };
+  }
+
+  /** The crop in force for an item: hand-set if there is one, else centred. */
+  function boxFor(it) {
+    if (it.crop) return it.crop;
+    if (!it.w || !it.h) return { fx: 0, fy: 0, fw: 1, fh: 1 };
+    return coverBox(it.w, it.h, ratioValue());
+  }
 
   var Bulk = {
 
@@ -62,7 +84,9 @@
             if (data.ok) {
               self.items.push({
                 path: data.path, url: data.url, name: file.name,
-                video: !!data.video, caption: ''
+                video: !!data.video, caption: '',
+                w: data.w, h: data.h,
+                crop: null            // set by the framing editor
               });
             } else {
               failures.push(file.name + ' — ' + (data.error || 'rejected'));
@@ -156,16 +180,28 @@
         return;
       }
 
+      var r = ratioValue();
+
       grid.innerHTML = this.items.map(function (it, i) {
         var s = slots[i] || { date: '—', time: '' };
-        var media = it.video
-          ? '<video src="' + it.url + '" muted></video>'
-          : '<img src="' + it.url + '" alt="">';
+        var media;
+
+        if (it.video) {
+          media = '<video src="' + it.url + '" muted></video>';
+        } else {
+          // Draw the thumbnail through the crop, so the grid shows the framing
+          // that will actually post rather than a square of the original.
+          var b = boxFor(it);
+          media = '<img src="' + it.url + '" alt="" style="position:absolute;max-width:none;' +
+                  'width:' + (100 / b.fw) + '%;height:' + (100 / b.fh) + '%;' +
+                  'left:' + (-b.fx * 100 / b.fw) + '%;top:' + (-b.fy * 100 / b.fh) + '%">';
+        }
 
         return '<div class="bulk-item">' +
-                 '<div class="bulk-thumb">' + media +
+                 '<div class="bulk-thumb" style="aspect-ratio:' + r + '" data-frame="' + i + '">' + media +
                    '<button type="button" class="bulk-x" data-i="' + i + '">&times;</button>' +
                    '<span class="bulk-n">' + (i + 1) + '</span>' +
+                   (it.video ? '' : '<span class="bulk-edit">Frame</span>') +
                  '</div>' +
                  '<div class="bulk-slot">' + s.date + (s.time ? ' · ' + s.time : '') + '</div>' +
                  '<textarea class="bulk-caption" data-i="' + i + '" rows="2" ' +
@@ -174,7 +210,16 @@
       }).join('');
 
       $$('.bulk-x', grid).forEach(function (b) {
-        b.addEventListener('click', function () { Bulk.remove(Number(b.dataset.i)); });
+        b.addEventListener('click', function (ev) {
+          ev.stopPropagation();          // do not open the framer on remove
+          Bulk.remove(Number(b.dataset.i));
+        });
+      });
+
+      $$('.bulk-thumb[data-frame]', grid).forEach(function (t) {
+        var i = Number(t.dataset.frame);
+        if (Bulk.items[i] && Bulk.items[i].video) return;
+        t.addEventListener('click', function () { Framer.open(i); });
       });
       $$('.bulk-caption', grid).forEach(function (t) {
         t.addEventListener('input', function () { Bulk.items[Number(t.dataset.i)].caption = t.value; });
@@ -239,6 +284,7 @@
             path:    it.path,
             name:    it.name,
             caption: it.caption && it.caption.trim() ? it.caption : caption,
+            crop:    it.crop || null,
             date:    slots[i] ? slots[i].date : '',
             time:    slots[i] ? slots[i].time : ''
           };
@@ -349,6 +395,7 @@
             path:    it.path,
             name:    it.name,
             caption: it.caption && it.caption.trim() ? it.caption : caption,
+            crop:    it.crop || null,
             accounts: accounts,
             ratio:   $('#b-ratio').value,
             link:    $('#b-link').value
@@ -424,6 +471,188 @@
   };
 
   window.Bulk = Bulk;
+
+  /* ==========================================================================
+     Framer - per-image framing.
+
+     Same idea as the composer's cropper: it never touches pixels, it records
+     which fraction of the source sits inside the frame. PHP does the real crop.
+     ========================================================================== */
+
+  var Framer = {
+
+    index: -1,
+    natW: 0, natH: 0,
+    scale: 1, baseScale: 1,
+    tx: 0, ty: 0,
+    ready: false,
+
+    frame: function () { return $('#f-frame'); },
+
+    open: function (i) {
+      var it = Bulk.items[i];
+      if (!it || it.video) return;
+
+      this.index = i;
+      this.ready = false;
+
+      $('#framer').classList.remove('hide');
+      document.body.style.overflow = 'hidden';
+      $('#f-count').textContent = 'Image ' + (i + 1) + ' of ' + Bulk.items.length;
+      $('#f-prev').disabled = i === 0;
+      $('#f-next').disabled = i === Bulk.items.length - 1;
+
+      var self = this;
+      var probe = new Image();
+      probe.onload = function () {
+        self.natW = it.w || probe.naturalWidth;
+        self.natH = it.h || probe.naturalHeight;
+        $('#f-img').src = it.url;
+        self.shape();
+        self.apply(boxFor(it));
+        self.ready = true;
+      };
+      probe.src = it.url;
+    },
+
+    close: function () {
+      $('#framer').classList.add('hide');
+      document.body.style.overflow = '';
+    },
+
+    done: function () {
+      this.commit();
+      this.close();
+      Bulk.render();
+    },
+
+    step: function (d) {
+      this.commit();
+      var next = this.index + d;
+      if (next >= 0 && next < Bulk.items.length) {
+        Bulk.render();
+        this.open(next);
+      }
+    },
+
+    /** Size the frame to the batch ratio, within a height budget. */
+    shape: function () {
+      var f = this.frame();
+      var stage = f.parentElement;
+      var w = (stage ? stage.clientWidth : 0) || 320;
+      var h = w / ratioValue();
+      if (h > 380) { h = 380; w = h * ratioValue(); }
+      f.style.width  = Math.round(w) + 'px';
+      f.style.height = Math.round(h) + 'px';
+    },
+
+    fit: function () {
+      var f = this.frame();
+      if (!this.natW || !this.natH) return 1;
+      return Math.max(f.clientWidth / this.natW, f.clientHeight / this.natH);
+    },
+
+    apply: function (b) {
+      this.shape();
+      var f = this.frame();
+      this.baseScale = this.fit();
+      this.scale = (f.clientWidth / b.fw) / this.natW;
+      this.tx = -b.fx * this.natW * this.scale;
+      this.ty = -b.fy * this.natH * this.scale;
+      $('#f-zoom').value = Math.min(3, Math.max(1, this.scale / this.baseScale)).toFixed(2);
+      this.clamp();
+      this.paint();
+    },
+
+    reset: function () {
+      var it = Bulk.items[this.index];
+      if (!it) return;
+      it.crop = null;
+      this.apply(coverBox(this.natW, this.natH, ratioValue()));
+    },
+
+    setZoom: function (z) {
+      var f = this.frame();
+      var cx = f.clientWidth / 2, cy = f.clientHeight / 2;
+      var before = this.scale;
+      this.baseScale = this.fit();
+      this.scale = this.baseScale * z;
+      var k = this.scale / before;
+      this.tx = cx - (cx - this.tx) * k;
+      this.ty = cy - (cy - this.ty) * k;
+      this.clamp();
+      this.paint();
+    },
+
+    clamp: function () {
+      var f = this.frame();
+      var dw = this.natW * this.scale, dh = this.natH * this.scale;
+      this.tx = Math.min(0, Math.max(f.clientWidth  - dw, this.tx));
+      this.ty = Math.min(0, Math.max(f.clientHeight - dh, this.ty));
+      if (dw <= f.clientWidth)  this.tx = (f.clientWidth  - dw) / 2;
+      if (dh <= f.clientHeight) this.ty = (f.clientHeight - dh) / 2;
+    },
+
+    paint: function () {
+      var i = $('#f-img');
+      i.style.width  = (this.natW * this.scale) + 'px';
+      i.style.height = (this.natH * this.scale) + 'px';
+      i.style.left   = this.tx + 'px';
+      i.style.top    = this.ty + 'px';
+    },
+
+    /** Store the framed region on the item, as fractions of the source. */
+    commit: function () {
+      var it = Bulk.items[this.index];
+      if (!it || !this.ready || !this.natW) return;
+
+      var f = this.frame();
+      var cl = function (v) { return Math.min(1, Math.max(0, v)) || 0; };
+
+      it.crop = {
+        fx: cl((-this.tx / this.scale) / this.natW),
+        fy: cl((-this.ty / this.scale) / this.natH),
+        fw: cl((f.clientWidth  / this.scale) / this.natW),
+        fh: cl((f.clientHeight / this.scale) / this.natH)
+      };
+    },
+
+    bind: function () {
+      var self = this, dragging = false, lx = 0, ly = 0;
+      var f = this.frame();
+      if (!f) return;
+
+      f.addEventListener('pointerdown', function (ev) {
+        if (!self.ready) return;
+        dragging = true; lx = ev.clientX; ly = ev.clientY;
+        f.setPointerCapture(ev.pointerId);
+        f.classList.add('grabbing');
+      });
+      f.addEventListener('pointermove', function (ev) {
+        if (!dragging) return;
+        self.tx += ev.clientX - lx; self.ty += ev.clientY - ly;
+        lx = ev.clientX; ly = ev.clientY;
+        self.clamp(); self.paint();
+      });
+      ['pointerup', 'pointercancel'].forEach(function (t) {
+        f.addEventListener(t, function () { dragging = false; f.classList.remove('grabbing'); });
+      });
+
+      $('#f-zoom').addEventListener('input', function () { self.setZoom(parseFloat(this.value)); });
+
+      $('#framer').addEventListener('mousedown', function (ev) {
+        if (ev.target === this) self.done();
+      });
+      document.addEventListener('keydown', function (ev) {
+        if ($('#framer').classList.contains('hide')) return;
+        if (ev.key === 'Escape')     self.done();
+        if (ev.key === 'ArrowRight') self.step(1);
+        if (ev.key === 'ArrowLeft')  self.step(-1);
+      });
+    }
+  };
+
+  window.Framer = Framer;
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!$('#b-dropzone')) return;
@@ -520,5 +749,6 @@
     });
 
     Bulk.count();
+    Framer.bind();
   });
 })();

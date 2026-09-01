@@ -16,6 +16,29 @@ $tz   = user_tz();
 
 define('BULK_MAX_ITEMS', 200);
 
+/**
+ * A crop box from the client, or null if it is not usable.
+ * Anything malformed falls back to a centred crop rather than producing a
+ * distorted image from junk numbers.
+ */
+function valid_crop($crop): ?array
+{
+    if (!is_array($crop)) {
+        return null;
+    }
+    $box = [];
+    foreach (['fx', 'fy', 'fw', 'fh'] as $k) {
+        if (!isset($crop[$k]) || !is_numeric($crop[$k])) {
+            return null;
+        }
+        $box[$k] = min(max((float)$crop[$k], 0), 1);
+    }
+    if ($box['fw'] <= 0.01 || $box['fh'] <= 0.01) {
+        return null;
+    }
+    return $box;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_fail('POST required.', 405);
 }
@@ -110,8 +133,10 @@ if ($action === 'create') {
 
         if (!is_video($path)) {
             $size = image_size($path);
-            $box  = $size ? cover_box($size['w'], $size['h'], $ratio)
-                          : ['fx' => 0, 'fy' => 0, 'fw' => 1, 'fh' => 1];
+            // A crop set by hand in the framing editor wins; otherwise centre it.
+            $box  = valid_crop($item['crop'] ?? null)
+                 ?: ($size ? cover_box($size['w'], $size['h'], $ratio)
+                           : ['fx' => 0, 'fy' => 0, 'fw' => 1, 'fh' => 1]);
 
             [$cropOk, $cropRes] = crop_media($path, $uid, $ratio, $box);
             if (!$cropOk) {
@@ -186,8 +211,9 @@ if ($action === 'publish_one') {
 
     if (!is_video($path)) {
         $size = image_size($path);
-        $box  = $size ? cover_box($size['w'], $size['h'], $ratio)
-                      : ['fx' => 0, 'fy' => 0, 'fw' => 1, 'fh' => 1];
+        $box  = valid_crop($body['crop'] ?? null)
+             ?: ($size ? cover_box($size['w'], $size['h'], $ratio)
+                       : ['fx' => 0, 'fy' => 0, 'fw' => 1, 'fh' => 1]);
 
         [$cropOk, $cropRes] = crop_media($path, $uid, $ratio, $box);
         if (!$cropOk) {

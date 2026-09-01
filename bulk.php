@@ -204,10 +204,48 @@ layout_head('Bulk upload', 'Bulk upload',
 
 <?php endif; ?>
 
+<!-- ---------- Framing editor ---------- -->
+<div class="modal-backdrop hide" id="framer" role="dialog" aria-modal="true" aria-labelledby="framer-title">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <h2 id="framer-title">Frame image</h2>
+      <button type="button" class="x-close" onclick="Framer.close()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="tiny muted" style="margin:0 0 14px">
+        Drag to reposition, zoom to fill. What you see inside the frame is exactly what posts.
+      </p>
+
+      <div class="crop-stage">
+        <div class="crop-frame" id="f-frame">
+          <img id="f-img" alt="" draggable="false">
+          <div class="crop-guides"></div>
+        </div>
+        <div class="crop-controls">
+          <span class="tiny muted nowrap">Zoom</span>
+          <input type="range" id="f-zoom" min="1" max="3" step="0.01" value="1">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="Framer.reset()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost btn-sm" id="f-prev" onclick="Framer.step(-1)">&larr; Previous</button>
+      <span class="tiny muted" id="f-count"></span>
+      <div class="row" style="margin-left:auto;gap:8px">
+        <button type="button" class="btn btn-ghost" id="f-next" onclick="Framer.step(1)">Next &rarr;</button>
+        <button type="button" class="btn" onclick="Framer.done()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php
 $payload = '<script>window.BULK = ' . json_encode([
     'csrf'      => csrf_token(),
     'tz'        => user_tz(),
+    'ratios'    => (object)array_map(fn($r) => $r['w'] / $r['h'], media_ratios()),
     'accounts'  => array_map(fn($a) => [
         'id'    => (int)$a['id'],
         'name'  => $a['display_name'],
