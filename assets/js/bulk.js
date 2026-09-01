@@ -754,7 +754,7 @@
         var field = $('#b-caption');
         var tags  = (chip.dataset.tags || '').split(/\s+/).filter(Boolean);
         var have  = {};
-        (field.value.match(/(?:^|[^\w&])#([\p{L}\p{N}_]+)/gu) || []).forEach(function (t) {
+        (field.value.match(/(?:^|[^\w&])([#@][\p{L}\p{N}_.]+)/gu) || []).forEach(function (t) {
           have[t.trim().toLowerCase()] = true;
         });
         var fresh = tags.filter(function (t) { return !have[t.toLowerCase()]; });

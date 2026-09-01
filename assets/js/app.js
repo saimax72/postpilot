@@ -609,7 +609,7 @@
       var current = field.value;
       var have    = {};
 
-      (current.match(/(?:^|[^\w&])#([\p{L}\p{N}_]+)/gu) || []).forEach(function (t) {
+      (current.match(/(?:^|[^\w&])([#@][\p{L}\p{N}_.]+)/gu) || []).forEach(function (t) {
         have[t.trim().toLowerCase()] = true;
       });
 

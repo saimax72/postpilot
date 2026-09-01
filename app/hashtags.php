@@ -2,15 +2,19 @@
 /**
  * Saved hashtag sets.
  *
- * A set is a named bundle of hashtags you drop into a caption or first comment
- * with one click, instead of retyping the same forty tags every week.
+ * A set is a named bundle of hashtags and @mentions you drop into a caption or
+ * first comment with one click, instead of retyping the same forty every week.
  */
 
 define('MAX_TAGS_PER_SET', 60);
 
 /**
- * Turn whatever the user typed into a clean, de-duplicated tag list.
- * Accepts them separated by spaces, commas or newlines, with or without the #.
+ * Turn whatever the user typed into a clean, de-duplicated list of hashtags
+ * and @mentions. Accepts them separated by spaces, commas or newlines.
+ *
+ * A bare word becomes a hashtag, since that is the common case; anything
+ * written with a leading @ stays a mention. Mentions allow a dot, because
+ * Instagram handles do.
  */
 function normalise_tags(string $raw): array
 {
@@ -18,17 +22,29 @@ function normalise_tags(string $raw): array
     $out   = [];
 
     foreach ($parts as $part) {
-        // Strip every leading # (people paste "##tag"), then keep only tag-safe characters.
-        $tag = preg_replace('/^#+/u', '', $part);
-        $tag = preg_replace('/[^\p{L}\p{N}_]/u', '', $tag);
+        $isMention = str_starts_with($part, '@');
 
-        if ($tag === '' || mb_strlen($tag) > 100) {
+        // People paste "##tag" and "@@name"; strip every leading marker.
+        $word = preg_replace('/^[#@]+/u', '', $part);
+
+        // Handles may contain dots. Hashtags may not.
+        $word = $isMention
+            ? preg_replace('/[^\p{L}\p{N}_.]/u', '', $word)
+            : preg_replace('/[^\p{L}\p{N}_]/u', '', $word);
+
+        $word = trim($word, '.');
+
+        if ($word === '' || mb_strlen($word) > 100) {
             continue;
         }
-        // Instagram treats tags case-insensitively, so dedupe that way too.
-        $key = mb_strtolower($tag);
+
+        $prefix = $isMention ? '@' : '#';
+
+        // Both are case-insensitive on the networks, so dedupe that way. The
+        // prefix is part of the key: #fanexpo and @fanexpo are different things.
+        $key = $prefix . mb_strtolower($word);
         if (!isset($out[$key])) {
-            $out[$key] = '#' . $tag;
+            $out[$key] = $prefix . $word;
         }
         if (count($out) >= MAX_TAGS_PER_SET) {
             break;
@@ -75,7 +91,7 @@ function set_save(int $userId, ?int $id, string $name, string $rawTags): array
 
     $tags = normalise_tags($rawTags);
     if (!$tags) {
-        return [false, 'Add at least one hashtag.'];
+        return [false, 'Add at least one hashtag or @mention.'];
     }
 
     $clash = db_value(

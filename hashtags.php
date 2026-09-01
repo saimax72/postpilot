@@ -38,10 +38,11 @@ layout_head('Hashtag sets', 'Hashtag sets',
     . icon('plus', 16) . ' New set</button>');
 ?>
 
-<p class="muted" style="max-width:70ch">
-  Bundle the hashtags you reuse into a named set, then drop the whole lot into a caption or a
-  first comment with one click. Tags are cleaned up as you save — the <span class="mono">#</span> is
-  added for you, duplicates are removed, and case is ignored when comparing.
+<p class="muted" style="max-width:72ch">
+  Bundle the hashtags and @mentions you reuse into a named set, then drop the whole lot into a
+  caption or a first comment with one click. Everything is cleaned up as you save — a bare word
+  becomes a hashtag, anything starting with <span class="mono">@</span> stays a mention,
+  duplicates are removed, and case is ignored when comparing.
 </p>
 
 <div class="row" style="align-items:flex-start;gap:24px;flex-wrap:wrap">
@@ -54,7 +55,7 @@ layout_head('Hashtag sets', 'Hashtag sets',
           <?= icon('list', 26) ?>
         </div>
         <h3>No sets yet</h3>
-        <p class="muted">Create one on the right — a name, then the hashtags you want in it.</p>
+        <p class="muted">Create one on the right — a name, then the hashtags and @mentions you want in it.</p>
       </div>
     <?php else: ?>
       <div class="stack">
@@ -63,8 +64,17 @@ layout_head('Hashtag sets', 'Hashtag sets',
             <div class="card-head">
               <div class="row">
                 <h3><?= e($s['name']) ?></h3>
-                <span class="badge"><?= (int)$s['tag_count'] ?> tag<?= $s['tag_count'] === 1 ? '' : 's' ?></span>
-                <?php if ($s['tag_count'] > 30): ?>
+                <?php
+                 $mentions = count(array_filter($s['tag_list'], fn($t) => str_starts_with($t, '@')));
+                 $tags     = $s['tag_count'] - $mentions;
+                ?>
+                <?php if ($tags): ?>
+                  <span class="badge"><?= $tags ?> hashtag<?= $tags === 1 ? '' : 's' ?></span>
+                <?php endif; ?>
+                <?php if ($mentions): ?>
+                  <span class="badge badge-scheduled"><?= $mentions ?> mention<?= $mentions === 1 ? '' : 's' ?></span>
+                <?php endif; ?>
+                <?php if ($tags > 30): ?>
                   <span class="badge badge-failed">over Instagram's 30</span>
                 <?php endif; ?>
               </div>
@@ -84,7 +94,7 @@ layout_head('Hashtag sets', 'Hashtag sets',
             <div class="card-pad">
               <div class="tag-cloud" id="set-<?= (int)$s['id'] ?>">
                 <?php foreach ($s['tag_list'] as $t): ?>
-                  <span class="tag-pill"><?= e($t) ?></span>
+                  <span class="tag-pill<?= str_starts_with($t, '@') ? ' is-mention' : '' ?>"><?= e($t) ?></span>
                 <?php endforeach; ?>
               </div>
             </div>
@@ -110,12 +120,12 @@ layout_head('Hashtag sets', 'Hashtag sets',
       </label>
 
       <label class="field">
-        <span>Hashtags</span>
+        <span>Hashtags and mentions</span>
         <textarea name="tags" rows="8" required
-                  placeholder="#cosplay #cosplayphotography #portrait&#10;&#10;or just: cosplay, portrait, conphotography"><?= e($editing['tags'] ?? '') ?></textarea>
+                  placeholder="#cosplay #portrait @fanexpocanada&#10;&#10;or just: cosplay, portrait, @thecosplayer"><?= e($editing['tags'] ?? '') ?></textarea>
         <span class="hint">
-          Separate with spaces, commas or new lines. The <span class="mono">#</span> is optional —
-          it gets added. Up to <?= MAX_TAGS_PER_SET ?> tags per set.
+          Separate with spaces, commas or new lines. A bare word becomes a hashtag; start it with
+          <span class="mono">@</span> to keep it as a mention. Up to <?= MAX_TAGS_PER_SET ?> per set.
         </span>
       </label>
 
@@ -138,7 +148,7 @@ function copySet(id) {
   ).join(' ');
 
   navigator.clipboard.writeText(tags).then(function () {
-    alert('Copied ' + tags.split(' ').length + ' hashtags to your clipboard.');
+    alert('Copied ' + tags.split(' ').length + ' items to your clipboard.');
   });
 }
 </script>

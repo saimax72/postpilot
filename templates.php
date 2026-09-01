@@ -218,7 +218,7 @@ layout_head('Templates', 'Post templates');
 function addTagsTo(fieldId, tags) {
   var f = document.getElementById(fieldId);
   var have = {};
-  (f.value.match(/(?:^|[^\w&])#([\p{L}\p{N}_]+)/gu) || []).forEach(function (t) {
+  (f.value.match(/(?:^|[^\w&])([#@][\p{L}\p{N}_.]+)/gu) || []).forEach(function (t) {
     have[t.trim().toLowerCase()] = true;
   });
   var fresh = tags.filter(function (t) { return !have[t.toLowerCase()]; });
