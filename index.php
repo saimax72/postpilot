@@ -21,7 +21,7 @@ $platforms = platforms();
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= asset('/assets/css/app.css') ?>">
-<link rel="icon" type="image/png" href="/assets/img/mark.png">">
+<link rel="icon" type="image/png" href="/assets/img/mark.png">
 </head>
 <body>
 
