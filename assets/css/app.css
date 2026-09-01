@@ -1536,3 +1536,81 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .auth-aside.is-plans { padding: 36px 24px; }
   .auth-aside.is-plans h2 { font-size: 1.625rem; }
 }
+
+/* ---------- Pricing page ---------- */
+
+.price-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 22px; align-items: start;
+}
+
+.price-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 30px 28px 28px;
+  box-shadow: 0 1px 2px rgba(20, 22, 28, .04);
+  display: flex; flex-direction: column;
+}
+
+/* The paid tier is the one we want read, so it carries the brand ground. */
+.price-card.is-featured {
+  border-color: rgba(124, 108, 246, .4);
+  background: linear-gradient(168deg, #f6f4ff, var(--card) 55%);
+  box-shadow: 0 18px 44px rgba(60, 50, 130, .12);
+}
+
+.price-tag {
+  position: absolute; top: -11px; left: 28px;
+  background: #7c6cf6; color: #fff;
+  font-size: .6875rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 4px 11px; border-radius: 999px;
+}
+
+.price-card h3 {
+  font-size: .8125rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--faint);
+  margin: 0 0 12px;
+}
+
+.price-amount {
+  font-family: var(--sans);
+  font-size: 2.75rem; font-weight: 800; letter-spacing: -.035em;
+  line-height: 1; margin: 0 0 10px; color: var(--ink);
+}
+.price-amount span {
+  font-size: .875rem; font-weight: 500; letter-spacing: 0;
+  color: var(--muted); margin-left: 4px;
+}
+
+.price-blurb {
+  font-size: .9375rem; color: var(--muted);
+  margin: 0 0 22px; padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.price-list { list-style: none; padding: 0; margin: 0 0 26px; display: grid; gap: 11px; }
+.price-list li {
+  position: relative; padding-left: 27px;
+  font-size: .875rem; color: var(--ink-2);
+}
+.price-list li.yes::before {
+  content: ""; position: absolute; left: 1px; top: .34em;
+  width: 14px; height: 7px;
+  border-left: 2px solid #7c6cf6; border-bottom: 2px solid #7c6cf6;
+  transform: rotate(-45deg);
+}
+/* A limit, not a feature — drawn as a dash so it does not read as included. */
+.price-list li.no { color: var(--faint); }
+.price-list li.no::before {
+  content: ""; position: absolute; left: 2px; top: .62em;
+  width: 12px; height: 2px; border-radius: 1px;
+  background: var(--faint);
+}
+
+/* Push the button to the bottom so cards of unequal length still line up. */
+.price-card .btn,
+.price-card .badge { margin-top: auto; align-self: flex-start; }
+.price-card .btn-block { align-self: stretch; }
