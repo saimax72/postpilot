@@ -1817,3 +1817,36 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 700px) {
   .page-banner { display: none; }
 }
+
+/* ---------- Stat cards sitting over a banner ---------- */
+
+/* Only when the row directly follows a banner. On pages without one — and on
+   the calendar when the "connect an account" prompt pushes them apart — the
+   cards keep their normal position, since there is nothing to overlap. */
+.page-banner + .stats {
+  /* Matched to the banner so the row does not run past it and leave the last
+     cards floating over bare background. */
+  max-width: 1060px;
+  margin-top: -58px;
+  position: relative;
+  z-index: 1;
+}
+
+.page-banner + .stats .stat {
+  /* Translucent so the artwork reads through, with a blur so the numbers stay
+     legible over whatever part of the image they land on. Browsers without
+     color-mix keep the solid card background declared above. */
+  background: color-mix(in srgb, var(--card) 74%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+          backdrop-filter: blur(12px) saturate(1.2);
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+  box-shadow: 0 6px 20px rgba(60, 50, 130, .10);
+}
+
+/* The banner is hidden below 700px, so the overlap has to go with it. */
+@media (max-width: 700px) {
+  .page-banner + .stats {
+    max-width: none;
+    margin-top: 0;
+  }
+}
