@@ -1733,3 +1733,14 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .pick-row:hover { border-color: var(--faint); }
 .pick-row:has(input:checked) { border-color: var(--brand); background: var(--brand-50); }
 .pick-row input { width: 17px; height: 17px; flex: none; accent-color: var(--brand); }
+
+/* "See plans" in the sidebar account block. */
+.nav-plan .nav-plan-tag {
+  margin-left: auto; padding: 1px 7px; border-radius: 999px;
+  font-size: .625rem; font-weight: 700; letter-spacing: .03em;
+  background: var(--brand-50); color: var(--brand-700);
+  white-space: nowrap;
+}
+.nav-plan.is-over .nav-plan-tag {
+  background: rgba(220, 38, 38, .14); color: #b91c1c;
+}

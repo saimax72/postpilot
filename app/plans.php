@@ -287,24 +287,32 @@ function trial_banner(?array $user = null): string
         return '<div class="trial-bar is-over">'
              . '<span><strong>Your free trial has ended.</strong> '
              . 'Scheduled posts still publish, but you cannot create new ones.</span>'
-             . '<a class="btn btn-sm" href="/pricing.php">Upgrade to Pro</a>'
              . '</div>';
     }
 
     $days  = trial_days_left($user);
     $limit = plan_limit('posts_per_day', $user);
     $used  = usage_posts_today((int)$user['id'], $user);
+    $full  = $limit > 0 && $used >= $limit;
 
-    $left  = $days === 1 ? '1 day left' : $days . ' days left';
-    $posts = $limit > 0 ? $used . ' of ' . $limit . ' posts today' : '';
+    $left = $days === 1 ? '1 day left' : $days . ' days left';
 
-    // Only nag once the trial is nearly over or the day is nearly spent.
-    $urgent = $days <= 2 || ($limit > 0 && $used >= $limit);
+    // Once the cap is passed, saying "57 of 10" reads like a broken counter
+    // rather than a limit. State the limit instead of the ratio.
+    if ($full) {
+        $posts = 'daily limit reached (' . $limit . ' a day)';
+    } elseif ($limit > 0) {
+        $posts = $used . ' of ' . $limit . ' posts today';
+    } else {
+        $posts = '';
+    }
+
+    // Only nag once the trial is nearly over or the day is spent.
+    $urgent = $days <= 2 || $full;
 
     return '<div class="trial-bar' . ($urgent ? ' is-warn' : '') . '">'
          . '<span><strong>' . e($left) . '</strong> in your free trial'
          . ($posts ? ' &middot; ' . e($posts) : '') . '</span>'
-         . '<a class="btn btn-sm btn-ghost" href="/pricing.php">See plans</a>'
          . '</div>';
 }
 

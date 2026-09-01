@@ -121,6 +121,14 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
           <div class="tiny muted" style="overflow:hidden;text-overflow:ellipsis"><?= e($user['email'] ?? '') ?></div>
         </span>
       </div>
+      <?php if (($planDays = trial_days_left()) !== null): ?>
+        <a class="nav-item nav-plan<?= trial_expired() ? ' is-over' : '' ?>" href="/pricing.php">
+          <?= icon('sparkle') ?><span>See plans</span>
+          <span class="nav-plan-tag">
+            <?= trial_expired() ? 'trial ended' : (int)$planDays . 'd left' ?>
+          </span>
+        </a>
+      <?php endif; ?>
       <button class="nav-item" style="width:100%;border:0;background:none;cursor:pointer;font:inherit" onclick="toggleTheme()">
         <?= icon('moon') ?><span>Theme</span>
       </button>
