@@ -1778,7 +1778,9 @@ table.data tbody tr:hover { background: var(--line-soft); }
    the app without any of them being stretched. The art is cropped to its
    content, so this is close to half what an uncropped strip would occupy. */
 .page-banner {
-  --banner-h: 150px;
+  /* 140 rather than 150: the workflow-icon strip is the shortest source at
+     128px tall, and this keeps its upscale to 1.09x instead of 1.17x. */
+  --banner-h: 140px;
   margin: 0 0 22px;
   border-radius: 14px;
   overflow: hidden;
