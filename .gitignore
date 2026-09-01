@@ -11,3 +11,8 @@ storage/*
 install.php
 
 *.zip
+
+# Design source material: reference mockups and asset packages. Processed
+# copies live in assets/img/; the originals should not deploy - they are large,
+# and this folder has held stray copies of app PHP files.
+mockup/
