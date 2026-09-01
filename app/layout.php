@@ -59,31 +59,30 @@ function brand_logo(): string
 /**
  * A decorative banner across the top of a page.
  *
- * The source images are between 869 and 1756 pixels wide, so each one is capped
- * near its own natural width. Letting an 869px illustration stretch across a
- * 1400px monitor would make it visibly soft, which looks worse than a banner
- * that simply stops short of the edge.
+ * The source art has been cropped to its content, so the height here is set and
+ * the width follows each image's own proportions. That keeps every banner the
+ * same height across the app while none of them is stretched: a row of icons
+ * ends up wide, a desk scene ends up narrower, and both sit on the same line.
  *
- * Marked aria-hidden: these carry no information a caption or heading does not
- * already give, so a screen reader announcing them would only be noise.
+ * Marked aria-hidden: these carry no information the page heading does not
+ * already give, so announcing them would only be noise.
  */
 function page_banner(string $name): string
 {
-    // name => [intrinsic width, intrinsic height]
+    // name => [intrinsic width, intrinsic height] after cropping
     $sizes = [
-        'banner-01-calendar-platforms' => [1756, 308],
-        'banner-02-calendar-mobile'    => [869, 251],
-        'banner-03-workflow-icons'     => [869, 251],
-        'banner-04-global-analytics'   => [869, 281],
-        'banner-05-calendar-desk'      => [869, 281],
+        'banner-01-calendar-platforms' => [1756, 278],
+        'banner-02-calendar-mobile'    => [869, 193],
+        'banner-03-workflow-icons'     => [869, 128],
+        'banner-04-global-analytics'   => [869, 215],
+        'banner-05-calendar-desk'      => [869, 232],
     ];
     if (!isset($sizes[$name])) {
         return '';
     }
     [$w, $h] = $sizes[$name];
-    $cap = (int)round($w * 1.15);   // a little upscaling is fine; a lot is not
 
-    return '<figure class="page-banner" aria-hidden="true" style="max-width:' . $cap . 'px">'
+    return '<figure class="page-banner" aria-hidden="true">'
          . '<img src="' . asset('/assets/img/banners/' . $name . '.webp') . '" alt=""'
          . ' width="' . $w . '" height="' . $h . '" decoding="async">'
          . '</figure>';
