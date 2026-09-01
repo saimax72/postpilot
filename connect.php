@@ -240,7 +240,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
   'facebook' => [
     'intro'  => 'You need a Facebook <strong>Page</strong> &mdash; an app cannot post to a personal
                  profile &mdash; and you must be an admin of it.',
-    'values' => ['EAAG1ZCx&#8230; (~200 chars)', 'Page ID', '102938475610293'],
+    'values' => ['EAAG1ZCx… (~200 chars)', 'Page ID', '102938475610293'],
     'steps'  => [
       ['Make sure you have a Page',
        'Open your Page and check you are listed as an admin under <em>Page access</em>. If you only
@@ -280,7 +280,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
   'instagram' => [
     'intro'  => 'The fussiest of the five, because Instagram posts through Facebook. You need a
                  <strong>Business</strong> or <strong>Creator</strong> account linked to a Page.',
-    'values' => ['EAAG1ZCx&#8230; or IGQVJ&#8230;', 'Instagram user ID', '17841400000000000'],
+    'values' => ['EAAG1ZCx… or IGQVJ…', 'Instagram user ID', '17841400000000000'],
     'steps'  => [
       ['Convert your Instagram account',
        'In the Instagram app: <em>Settings &rarr; Account type and tools &rarr; Switch to
@@ -316,7 +316,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
   'threads' => [
     'intro'  => 'Threads has its own API, separate from Instagram&rsquo;s, even though the accounts
                  are linked.',
-    'values' => ['THQVJ&#8230;', 'Threads user ID', '78901234567890'],
+    'values' => ['THQVJ…', 'Threads user ID', '78901234567890'],
     'steps'  => [
       ['Create a Threads app',
        'At <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a>,
@@ -345,7 +345,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
   'linkedin' => [
     'intro'  => 'LinkedIn identifies you by a <strong>URN</strong> rather than a plain ID &mdash; a
                  string that looks like <code>urn:li:person:AbC123</code>.',
-    'values' => ['AQVJ&#8230; (very long)', 'Your URN', 'urn:li:person:AbC123'],
+    'values' => ['AQVJ… (very long)', 'Your URN', 'urn:li:person:AbC123'],
     'steps'  => [
       ['Create a LinkedIn app',
        'Go to <a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener noreferrer">linkedin.com/developers/apps</a>
