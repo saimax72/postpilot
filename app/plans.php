@@ -227,6 +227,45 @@ function plan_usage_rows(int $userId, ?array $user = null): array
 }
 
 /**
+ * The strip shown across the top of the app while a trial is running.
+ *
+ * A limit the user cannot see is a limit they only discover by hitting it, so
+ * this states both numbers — days left and posts used today — before either
+ * runs out. Returns an empty string when there is nothing worth saying.
+ */
+function trial_banner(?array $user = null): string
+{
+    $user = $user ?: auth_user();
+    if (!$user || is_admin_user($user) || plan_key($user) !== 'trial') {
+        return '';
+    }
+
+    if (trial_expired($user)) {
+        return '<div class="trial-bar is-over">'
+             . '<span><strong>Your free trial has ended.</strong> '
+             . 'Scheduled posts still publish, but you cannot create new ones.</span>'
+             . '<a class="btn btn-sm" href="/pricing.php">Upgrade to Pro</a>'
+             . '</div>';
+    }
+
+    $days  = trial_days_left($user);
+    $limit = plan_limit('posts_per_day', $user);
+    $used  = usage_posts_today((int)$user['id'], $user);
+
+    $left  = $days === 1 ? '1 day left' : $days . ' days left';
+    $posts = $limit > 0 ? $used . ' of ' . $limit . ' posts today' : '';
+
+    // Only nag once the trial is nearly over or the day is nearly spent.
+    $urgent = $days <= 2 || ($limit > 0 && $used >= $limit);
+
+    return '<div class="trial-bar' . ($urgent ? ' is-warn' : '') . '">'
+         . '<span><strong>' . e($left) . '</strong> in your free trial'
+         . ($posts ? ' &middot; ' . e($posts) : '') . '</span>'
+         . '<a class="btn btn-sm btn-ghost" href="/pricing.php">See plans</a>'
+         . '</div>';
+}
+
+/**
  * Whether migration 005 has been applied.
  *
  * The code is deployed by pushing, but migrations are run by hand afterwards,

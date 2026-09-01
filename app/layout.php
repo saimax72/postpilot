@@ -145,6 +145,7 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
     </header>
 
     <main class="page">
+      <?= trial_banner($user) ?>
       <?php foreach (flash_pull() as $f): ?>
         <div class="alert alert-<?= e($f['type']) ?>"><?= e($f['message']) ?></div>
       <?php endforeach; ?>

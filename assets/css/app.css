@@ -1614,3 +1614,46 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .price-card .btn,
 .price-card .badge { margin-top: auto; align-self: flex-start; }
 .price-card .btn-block { align-self: stretch; }
+
+/* ---------- Trial strip inside the app ---------- */
+
+.trial-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 12px 16px;
+  border-radius: var(--r);
+  font-size: .875rem; color: var(--ink-2);
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+}
+.trial-bar strong { color: var(--ink); }
+.trial-bar.is-warn {
+  background: rgba(234, 179, 8, .1);
+  border-color: rgba(234, 179, 8, .35);
+}
+.trial-bar.is-over {
+  background: rgba(220, 38, 38, .08);
+  border-color: rgba(220, 38, 38, .3);
+}
+
+/* ---------- Plan usage on the settings page ---------- */
+
+.plan-usage { margin-top: 18px; display: grid; gap: 12px; }
+.plan-usage-row {
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  gap: 4px 14px; font-size: .875rem;
+}
+.plan-usage-row .k { color: var(--muted); }
+.plan-usage-row .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.plan-usage-row.is-full .v { color: var(--red); }
+
+.plan-meter {
+  grid-column: 1 / -1;
+  height: 5px; border-radius: 3px; overflow: hidden;
+  background: var(--line);
+}
+.plan-meter > span {
+  display: block; height: 100%; border-radius: 3px;
+  background: var(--brand); transition: width .3s ease;
+}
+.plan-usage-row.is-full .plan-meter > span { background: var(--red); }

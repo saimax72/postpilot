@@ -107,6 +107,56 @@ layout_head('Settings', 'Settings');
   </div>
 
   <div class="card">
+    <div class="card-head">
+      <h3>Your plan</h3>
+      <a class="btn btn-ghost btn-sm" href="/pricing.php">Compare plans</a>
+    </div>
+    <div class="card-pad">
+      <div class="row" style="justify-content:space-between;align-items:baseline;gap:14px">
+        <div>
+          <div style="font-weight:650;font-size:1.0625rem"><?= e(plan()['label']) ?></div>
+          <div class="small muted"><?= e(plan()['blurb']) ?></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--sans);font-weight:800;font-size:1.5rem;letter-spacing:-.03em"><?= e(plan()['price']) ?></div>
+          <div class="tiny muted"><?= e(plan()['period']) ?></div>
+        </div>
+      </div>
+
+      <?php if (($daysLeft = trial_days_left()) !== null): ?>
+        <p class="small muted" style="margin:14px 0 0">
+          <?php if (trial_expired()): ?>
+            Your trial ended. Posts already scheduled still publish; creating new ones needs Pro.
+          <?php else: ?>
+            <?= $daysLeft === 1 ? '1 day' : (int)$daysLeft . ' days' ?> left,
+            ending <?= e(date('j F Y', strtotime(trial_ends() . ' UTC'))) ?>.
+          <?php endif; ?>
+        </p>
+      <?php endif; ?>
+
+      <div class="plan-usage">
+        <?php foreach (plan_usage_rows((int)$user['id']) as $row): ?>
+          <div class="plan-usage-row<?= $row['full'] ? ' is-full' : '' ?>">
+            <span class="k"><?= e($row['label']) ?></span>
+            <span class="v"><?= e($row['text']) ?></span>
+            <?php if ($row['limit'] > 0): ?>
+              <span class="plan-meter">
+                <span style="width:<?= (int)min(100, round(100 * $row['used'] / $row['limit'])) ?>%"></span>
+              </span>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+      <?php if (is_admin_user()): ?>
+        <p class="tiny muted" style="margin:14px 0 0">
+          Administrators are exempt from every plan limit.
+        </p>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-head"><h3>Your workspace</h3></div>
     <div class="card-pad">
       <div class="stats" style="margin:0">
