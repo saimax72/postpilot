@@ -47,6 +47,7 @@ if ($inApp) {
     layout_head('Pricing', 'Plans and pricing');
     $days = trial_days_left();
     ?>
+    <div class="page-mid">
     <?php if ($days !== null): ?>
       <p class="muted" style="margin:0 0 22px;max-width:62ch">
         <?php if (trial_expired()): ?>
@@ -60,6 +61,7 @@ if ($inApp) {
     <?php endif; ?>
 
     <?php pricing_content($plans, $now, true); ?>
+    </div>
     <?php
     layout_foot();
     return;

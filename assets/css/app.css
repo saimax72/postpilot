@@ -347,6 +347,9 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .topbar h1 { font-family: var(--display); font-weight: 400; font-size: 1.5rem; margin: 0; }
 .page { padding: 32px 34px 72px; }
 .page-narrow { max-width: 760px; }
+/* Wider than a form column, narrower than the screen: enough for two cards
+   side by side without the row stretching across a large monitor. */
+.page-mid    { max-width: 1000px; }
 
 .menu-toggle { display: none; }
 
