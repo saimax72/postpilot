@@ -84,52 +84,11 @@ $platforms = platforms();
       <?php endforeach; ?>
     </div>
 
-    <!-- Static preview of the product -->
-    <div class="screenshot">
-      <div class="ss-bar"><span></span><span></span><span></span></div>
-      <div style="padding:22px;text-align:left">
-        <div class="cal-toolbar" style="margin-bottom:14px">
-          <h3 class="cal-title" style="font-size:1.125rem"><?= date('F Y') ?></h3>
-          <span class="seg"><span class="on">Month</span><span>Week</span><span>List</span></span>
-        </div>
-        <div class="cal">
-          <div class="cal-dow">
-            <?php foreach (['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d): ?><div><?= $d ?></div><?php endforeach; ?>
-          </div>
-          <div class="cal-grid">
-            <?php
-            $demo = [
-                3  => [['09:00', 'Behind the scenes reel', 'instagram', 'st-scheduled']],
-                5  => [['12:30', 'New hours announcement', 'facebook', 'st-published']],
-                8  => [['08:15', 'Hiring: front of house', 'linkedin', 'st-scheduled'],
-                       ['17:00', 'Friday deal thread', 'x', 'st-scheduled']],
-                12 => [['11:00', 'Product close-up', 'pinterest', 'st-draft']],
-                15 => [['19:45', 'Weekend teaser', 'tiktok', 'st-scheduled']],
-                18 => [['10:00', 'Customer story', 'threads', 'st-published']],
-            ];
-            for ($i = 1; $i <= 28; $i++):
-                $evs = $demo[$i] ?? [];
-            ?>
-              <div class="cal-cell" style="min-height:104px">
-                <span class="daynum"><?= $i ?></span>
-                <?php foreach ($evs as [$time, $text, $plat, $cls]): ?>
-                  <span class="ev <?= $cls ?>" style="cursor:default">
-                    <span class="ev-thumb ev-thumb-empty"><?= icon('image', 13) ?></span>
-                    <span class="ev-main">
-                      <span class="ev-time"><?= $time ?></span>
-                      <span class="ev-text"><?= e($text) ?></span>
-                      <span class="ev-icons">
-                        <span class="pdot pdot-sm" style="background:<?= e(platform_color($plat)) ?>"><?= platform_icon($plat, 10) ?></span>
-                      </span>
-                    </span>
-                  </span>
-                <?php endforeach; ?>
-              </div>
-            <?php endfor; ?>
-          </div>
-        </div>
-      </div>
+    <div class="hero-shot">
+      <img src="<?= asset('/assets/img/hero-shot.jpg') ?>" width="1400" height="1302"
+           alt="The PostPilot calendar on a tablet showing a month of scheduled posts across Instagram, Facebook, TikTok, YouTube, LinkedIn and X, with an engagement chart alongside.">
     </div>
+
   </div>
 </section>
 

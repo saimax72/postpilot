@@ -1054,3 +1054,16 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 780px) {
   .brand-logo-set { max-width: 150px; }
 }
+
+/* ---------- Home hero product shot ---------- */
+
+.hero-shot {
+  max-width: 900px; margin: 44px auto 0;
+  border-radius: var(--r-xl); overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.hero-shot img { width: 100%; height: auto; display: block; }
+
+@media (max-width: 780px) {
+  .hero-shot { margin-top: 30px; border-radius: var(--r-lg); }
+}
