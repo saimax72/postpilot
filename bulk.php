@@ -104,14 +104,22 @@ layout_head('Bulk upload', 'Bulk upload',
         <input type="date" id="b-start">
       </label>
 
-      <label class="field">
-        <span>Times of day</span>
-        <input type="text" id="b-times" value="09:00" placeholder="09:00, 17:00">
+      <div class="field">
+        <span class="label">Times of day</span>
+        <div class="time-list" id="b-times">
+          <span class="time-chip">
+            <input type="time" value="09:00">
+            <button type="button" class="time-x" title="Remove">&times;</button>
+          </span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="b-add-time" style="margin-top:8px">
+          + Add another time
+        </button>
         <span class="hint">
-          Comma separated. Two times means two posts a day, and so on.
+          One post per time, per posting day. Two times means two posts a day.
           Shown in <?= e(str_replace('_', ' ', user_tz())) ?>.
         </span>
-      </label>
+      </div>
 
       <div class="field">
         <span class="label">Days to post on</span>

@@ -100,15 +100,12 @@
     slots: function () {
       var start = $('#b-start').value || new Date().toISOString().slice(0, 10);
 
-      var times = ($('#b-times').value || '09:00')
-        .split(',')
-        .map(function (t) { return t.trim(); })
-        .filter(function (t) { return /^\d{1,2}:\d{2}$/.test(t); })
-        .map(function (t) {
-          var p = t.split(':');
-          return String(p[0]).padStart(2, '0') + ':' + p[1];
-        });
+      var times = $$('#b-times input[type=time]')
+        .map(function (i) { return i.value; })
+        .filter(function (t) { return /^\d{2}:\d{2}$/.test(t); });
 
+      // De-duplicate, then order them so the day fills forwards.
+      times = times.filter(function (t, i) { return times.indexOf(t) === i; });
       if (!times.length) times = ['09:00'];
       times.sort();
 
@@ -461,9 +458,41 @@
     });
 
     // Any cadence change re-slots the whole batch.
-    ['b-start', 'b-times', 'b-interval', 'b-ratio'].forEach(function (id) {
+    ['b-start', 'b-interval', 'b-ratio'].forEach(function (id) {
       $('#' + id).addEventListener('input', function () { Bulk.render(); });
       $('#' + id).addEventListener('change', function () { Bulk.render(); });
+    });
+
+    // Times of day: a row of pickers rather than a comma-separated string.
+    var timeList = $('#b-times');
+
+    timeList.addEventListener('input',  function () { Bulk.render(); });
+    timeList.addEventListener('change', function () { Bulk.render(); });
+
+    timeList.addEventListener('click', function (ev) {
+      var x = ev.target.closest('.time-x');
+      if (!x) return;
+      // Never leave zero times - the batch would have nowhere to go.
+      if (timeList.querySelectorAll('.time-chip').length > 1) {
+        x.closest('.time-chip').remove();
+        Bulk.render();
+      }
+    });
+
+    $('#b-add-time').addEventListener('click', function () {
+      var chips = timeList.querySelectorAll('.time-chip');
+      var last  = chips[chips.length - 1].querySelector('input').value || '09:00';
+
+      // Offer a sensible next slot rather than another identical time.
+      var parts = last.split(':');
+      var next  = (Number(parts[0]) + 4) % 24;
+
+      var chip = document.createElement('span');
+      chip.className = 'time-chip';
+      chip.innerHTML = '<input type="time" value="' + String(next).padStart(2, '0') + ':' + parts[1] + '">' +
+                       '<button type="button" class="time-x" title="Remove">&times;</button>';
+      timeList.appendChild(chip);
+      Bulk.render();
     });
     $$('#b-days input').forEach(function (i) {
       i.addEventListener('change', function () { Bulk.render(); });

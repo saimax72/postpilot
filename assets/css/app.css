@@ -1072,3 +1072,25 @@ table.data tbody tr:hover { background: var(--line-soft); }
   margin-top: 4px; font-size: .6875rem; font-weight: 600;
   color: var(--muted); letter-spacing: .01em;
 }
+
+/* ---------- Bulk: times of day ---------- */
+
+.time-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.time-chip {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card); overflow: hidden;
+}
+.time-chip input[type=time] {
+  width: auto; border: 0; border-radius: 0;
+  padding: 9px 4px 9px 12px; background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.time-chip input[type=time]:focus { box-shadow: none; }
+.time-chip:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(55, 48, 163, .12); }
+.time-x {
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--faint); font-size: 17px; line-height: 1;
+  padding: 0 10px 0 4px; align-self: stretch;
+}
+.time-x:hover { color: var(--red); }
