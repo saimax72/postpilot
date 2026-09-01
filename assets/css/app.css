@@ -1028,3 +1028,30 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .feed-cell.is-live { display: block; }
 .feed-cell.is-live:hover { opacity: .85; }
+
+/* ==========================================================================
+   Brand logo
+   ========================================================================== */
+
+.brand-logo { width: 100%; max-width: 190px; height: auto; display: block; }
+
+/* The wordmark is drawn in white and silver with a soft glow — it is built for
+   dark grounds. On the sidebar that is free; anywhere light it needs one, or
+   "POST" greys out and the tagline disappears entirely. */
+.brand-plaque {
+  display: inline-flex; align-items: center;
+  padding: 9px 16px; border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+.brand-plaque .brand-logo { max-width: 168px; }
+
+.site-head .brand { padding: 0; }
+.site-head .brand-plaque { padding: 7px 13px; }
+.site-head .brand-plaque .brand-logo { max-width: 148px; }
+
+.auth-form .brand-plaque { margin-bottom: 6px; }
+
+@media (max-width: 780px) {
+  .brand-plaque .brand-logo { max-width: 140px; }
+}

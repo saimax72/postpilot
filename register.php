@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="auth-panel">
     <div class="auth-form">
-      <a class="brand" href="/" style="padding-left:0">
-        <span class="brand-mark"><?= icon('send', 17) ?></span><?= e(APP_NAME) ?>
+      <a class="brand" href="/" style="padding:0">
+        <span class="brand-plaque"><img class="brand-logo" src="<?= asset('/assets/img/logo.png') ?>" alt="<?= e(APP_NAME) ?>"></span>
       </a>
 
       <h1 style="margin-top:18px">Start scheduling</h1>
