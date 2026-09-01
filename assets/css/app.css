@@ -1091,7 +1091,8 @@ table.data tbody tr:hover { background: var(--line-soft); }
 /* ---------- Auth page visual ---------- */
 
 .auth-visual {
-  margin: 26px 0 6px;
+  /* Nothing sits above it now, so no leading gap. */
+  margin: 0 0 22px;
   border-radius: var(--r-lg); overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .22);
   box-shadow: 0 18px 44px rgba(15, 18, 40, .32);

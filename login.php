@@ -75,9 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <aside class="auth-aside">
     <span class="blob b1"></span>
     <span class="blob b2"></span>
-    <h2>Schedule social media posts across every platform from one calendar</h2>
-    <p>Plan the month, then let the queue publish for you.</p>
-
     <div class="auth-visual">
       <img src="<?= asset('/assets/img/login-visual.jpg') ?>" width="1200" height="800"
            alt="A desk with the PostPilot calendar open on a monitor, an engagement chart beside it, and Instagram, Facebook, TikTok, YouTube, LinkedIn and X icons along the desktop.">
