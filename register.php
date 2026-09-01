@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </a>
 
       <h1 style="margin-top:18px">Start scheduling</h1>
-      <p class="muted">Free to create. No card, no trial clock.</p>
+      <p class="muted">Free for <?= TRIAL_DAYS ?> days. No card needed.</p>
 
       <?php if ($error): ?>
         <div class="alert alert-error"><?= e($error) ?></div>
@@ -93,17 +93,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
   </div>
 
-  <aside class="auth-aside">
+  <aside class="auth-aside is-plans">
     <span class="blob b1"></span>
     <span class="blob b2"></span>
-    <h2>Spend less time posting, more time running the business you built</h2>
-    <p>One composer, one calendar, every network.</p>
-    <ul>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Plan a whole month in a single sitting</li>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Posts publish themselves at the time you picked</li>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Grid preview before anything reaches your feed</li>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Failed posts retry and tell you why</li>
-    </ul>
+    <div class="aside-scroll">
+    <h2>Free for <?= TRIAL_DAYS ?> days.<br>Then $12 a month.</h2>
+    <p>No card needed, and nothing is charged when the trial ends.</p>
+
+    <div class="trial-box">
+      <div class="trial-head">
+        <span class="trial-name">Your <?= TRIAL_DAYS ?>-day trial</span>
+        <span class="trial-price">$0</span>
+      </div>
+      <ul>
+        <li><span class="tick"><?= icon('check', 12) ?></span> Every feature unlocked</li>
+        <li><span class="tick"><?= icon('check', 12) ?></span> <strong>10 scheduled posts a day</strong></li>
+        <li><span class="tick"><?= icon('check', 12) ?></span> All 8 networks, unlimited channels</li>
+        <li><span class="tick"><?= icon('check', 12) ?></span> Bulk upload, templates, hashtag sets</li>
+      </ul>
+    </div>
+
+    <div class="trial-box is-paid">
+      <div class="trial-head">
+        <span class="trial-name">Pro, after the trial</span>
+        <span class="trial-price">$12<span class="trial-per">/month</span></span>
+      </div>
+      <ul>
+        <li><span class="tick"><?= icon('check', 12) ?></span> <strong>Unlimited posts</strong> — no daily cap</li>
+        <li><span class="tick"><?= icon('check', 12) ?></span> Everything in the trial, permanently</li>
+      </ul>
+    </div>
+
+    <p class="trial-note">
+      When the trial ends your posts, images and templates stay put, and anything
+      already scheduled still publishes. Only creating new posts stops until you upgrade.
+      <a href="/pricing.php">Full details</a>
+    </p>
+    </div>
   </aside>
 
 </div>

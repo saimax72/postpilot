@@ -1486,3 +1486,53 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .cal-large .ev-thumb { aspect-ratio: 1; }
   .cal-large .ev-icons { display: flex; }
 }
+
+/* ---------- Signup aside: the plan comparison ---------- */
+
+/* Taller than the other auth asides, so the copy scrolls inside the panel
+   rather than being clipped by the overflow that hides the blobs. */
+.auth-aside.is-plans { padding: 48px 4vw; }
+.auth-aside.is-plans h2 { font-size: 1.875rem; max-width: 20ch; margin-bottom: 6px; }
+.auth-aside.is-plans p  { font-size: .9375rem; }
+
+.aside-scroll {
+  position: relative; z-index: 1;
+  max-height: 100%; overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .35) transparent;
+}
+.aside-scroll::-webkit-scrollbar { width: 6px; }
+.aside-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .3); border-radius: 3px;
+}
+
+.trial-box {
+  margin-top: 18px; padding: 16px 18px;
+  border-radius: var(--r);
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .22);
+}
+.trial-box.is-paid { background: rgba(255, 255, 255, .05); }
+
+.trial-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.trial-name  { font-weight: 650; font-size: .9375rem; }
+.trial-price { font-family: var(--display); font-size: 1.5rem; line-height: 1; }
+.trial-per   { font-family: var(--sans); font-size: .75rem; opacity: .8; }
+
+.auth-aside .trial-box ul { margin: 0; gap: 9px; }
+.auth-aside .trial-box li { font-size: .875rem; }
+
+.trial-note {
+  margin-top: 18px; font-size: .8125rem; line-height: 1.5;
+  color: rgba(255, 255, 255, .78) !important; max-width: 46ch;
+}
+.trial-note a { color: #fff; text-decoration: underline; white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .auth-aside.is-plans { padding: 36px 24px; }
+  .auth-aside.is-plans h2 { font-size: 1.625rem; }
+}

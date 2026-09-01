@@ -147,9 +147,19 @@ function register_user(string $name, string $email, string $password, string $ti
 
     $colors = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2'];
 
+    $cols = ['name', 'email', 'password_hash', 'role', 'timezone', 'avatar_color', 'plan'];
+    $vals = [$name, $email, password_hash($password, PASSWORD_DEFAULT), $role, $timezone,
+             $colors[array_rand($colors)], 'trial'];
+
+    if (has_trial_column()) {
+        $cols[] = 'trial_ends_at';
+        $vals[] = gmdate('Y-m-d H:i:s', time() + TRIAL_DAYS * 86400);
+    }
+
     db_run(
-        'INSERT INTO users (name, email, password_hash, role, timezone, avatar_color) VALUES (?,?,?,?,?,?)',
-        [$name, $email, password_hash($password, PASSWORD_DEFAULT), $role, $timezone, $colors[array_rand($colors)]]
+        'INSERT INTO users (' . implode(', ', $cols) . ') VALUES ('
+        . implode(',', array_fill(0, count($vals), '?')) . ')',
+        $vals
     );
     $id = (int)db()->lastInsertId();
     log_activity($id, 'register', 'Account created');

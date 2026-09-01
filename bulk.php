@@ -12,7 +12,13 @@ layout_head('Bulk upload', 'Bulk upload',
     '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('calendar', 15) . ' Calendar</a>');
 ?>
 
-<?php if (!$accounts): ?>
+<?php if (trial_expired()): ?>
+  <div class="alert alert-warn">
+    <?= icon('clock', 18) ?>
+    <span><strong>Your free trial has ended.</strong>
+      Upgrade to Pro to use bulk upload — <a href="/pricing.php">see plans</a>.</span>
+  </div>
+<?php elseif (!$accounts): ?>
   <div class="alert alert-info">
     <?= icon('link', 18) ?>
     <span><strong>Connect a channel first.</strong> <a href="/accounts.php">Add one</a>, then come back.</span>

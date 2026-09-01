@@ -166,6 +166,16 @@ function post_save(int $userId, ?int $postId, string $content, array $accountIds
     if ($content === '' && !$mediaPath) {
         return [false, 'Write something or attach an image before scheduling.'];
     }
+
+    // Plan limits are checked here because every route that creates a post -
+    // the composer, bulk upload, Post now - comes through this function.
+    // Editing an existing post is never blocked: the post already counted.
+    if (!$postId) {
+        $owner = db_one('SELECT * FROM users WHERE id = ?', [$userId]);
+        if ($owner && ($why = post_block_reason($userId, $owner))) {
+            return [false, $why];
+        }
+    }
     if (!$accountIds) {
         return [false, 'Choose at least one account to publish to.'];
     }
