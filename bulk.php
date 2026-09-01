@@ -126,6 +126,11 @@ layout_head('Bulk upload', 'Bulk upload',
         </div>
       </div>
 
+      <p class="tiny muted" style="margin:-6px 0 16px">
+        These control <strong>Add to calendar</strong> only. <strong>Post all now</strong>
+        ignores them and publishes immediately.
+      </p>
+
       <label class="field" style="margin-bottom:0">
         <span>Skip ahead</span>
         <select id="b-interval">
@@ -166,10 +171,19 @@ layout_head('Bulk upload', 'Bulk upload',
 
         <div class="bulk-grid" id="b-grid"></div>
       </div>
-      <div class="card-head" style="border-top:1px solid var(--line);border-bottom:0">
+      <div class="card-head" style="border-top:1px solid var(--line);border-bottom:0;flex-direction:column;align-items:stretch;gap:10px">
+        <p class="tiny muted" style="margin:0">
+          <strong>Post all now</strong> publishes immediately, one after another, with a pause between each.
+          Instagram's API allows <strong>25 posts per rolling 24 hours</strong> — beyond that it starts
+          refusing, and the failures will be listed per image.
+        </p>
         <span class="small muted" id="b-summary">Nothing queued yet.</span>
-        <div class="row" style="gap:8px">
+        <div class="row" style="gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost" type="button" onclick="Bulk.create('draft')">Add as drafts</button>
+          <button class="btn btn-soft" type="button" id="b-now" onclick="Bulk.publishAll()"
+                  title="Publish every image now, one after another, ignoring the schedule">
+            <?= icon('zap', 16) ?> Post all now
+          </button>
           <button class="btn" type="button" id="b-go" onclick="Bulk.create('scheduled')">
             <?= icon('calendar', 16) ?> Add to calendar
           </button>

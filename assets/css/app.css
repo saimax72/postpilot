@@ -1055,3 +1055,15 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 780px) {
   .brand-plaque .brand-logo { max-width: 140px; }
 }
+
+/* ---------- Bulk: per-item publish result ---------- */
+
+.bulk-result {
+  position: absolute; left: 4px; right: 4px; bottom: 4px; z-index: 2;
+  padding: 3px 6px; border-radius: 5px;
+  font-size: .625rem; font-weight: 700; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bulk-result.is-working { background: rgba(20, 22, 28, .8); color: #fff; }
+.bulk-result.is-ok      { background: var(--green);        color: #fff; }
+.bulk-result.is-bad     { background: var(--red);          color: #fff; }

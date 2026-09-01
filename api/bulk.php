@@ -151,4 +151,85 @@ if ($action === 'create') {
     ]);
 }
 
+/* --------------------------------------------------------- publish_one ---- */
+
+/*
+ * Publish a single item from a batch, straight away.
+ *
+ * One request per item rather than one for the batch: publishing talks to the
+ * network and can take tens of seconds each, so a batch of twenty in a single
+ * request would exceed any sane execution limit and give no progress until it
+ * either finished or died.
+ */
+if ($action === 'publish_one') {
+    @set_time_limit(120);
+
+    $body     = json_body();
+    $accounts = array_map('intval', (array)($body['accounts'] ?? []));
+    $ratio    = (string)($body['ratio'] ?? 'square');
+    $path     = trim((string)($body['path'] ?? ''));
+    $caption  = (string)($body['caption'] ?? '');
+    $label    = (string)($body['name'] ?? 'image');
+
+    if (!media_ratio($ratio)) {
+        $ratio = 'square';
+    }
+    if (!$accounts) {
+        json_fail('Choose at least one channel.');
+    }
+    if ($path === '' || strpos($path, $uid . '/') !== 0) {
+        json_fail('That file does not belong to your account.');
+    }
+
+    $mediaPath = $path;
+    $cropBox   = null;
+
+    if (!is_video($path)) {
+        $size = image_size($path);
+        $box  = $size ? cover_box($size['w'], $size['h'], $ratio)
+                      : ['fx' => 0, 'fy' => 0, 'fw' => 1, 'fh' => 1];
+
+        [$cropOk, $cropRes] = crop_media($path, $uid, $ratio, $box);
+        if (!$cropOk) {
+            json_out(['ok' => false, 'name' => $label, 'error' => $cropRes]);
+        }
+        $mediaPath = $cropRes;
+        $cropBox   = implode(',', array_map(fn($v) => round($v, 6), array_values($box)));
+    }
+
+    [$ok, $result] = post_save(
+        $uid, null, $caption, $accounts, gmdate('Y-m-d H:i:s'), 'scheduled',
+        $mediaPath, trim((string)($body['link'] ?? '')) ?: null,
+        $path, $ratio, $cropBox,
+        mb_substr((string)($body['alt'] ?? ''), 0, 400) ?: null,
+        mb_substr((string)($body['first_comment'] ?? ''), 0, 600) ?: null
+    );
+
+    if (!$ok) {
+        json_out(['ok' => false, 'name' => $label, 'error' => $result]);
+    }
+
+    // Claim it the way the worker does, so a cron run cannot double-post.
+    $claimed = db_run(
+        "UPDATE posts SET status = 'publishing', attempts = attempts + 1
+         WHERE id = ? AND status = 'scheduled'",
+        [$result]
+    )->rowCount();
+
+    if (!$claimed) {
+        json_out(['ok' => true, 'id' => $result, 'published' => false, 'name' => $label,
+                  'error' => 'The scheduler picked this one up first — check the queue.']);
+    }
+
+    $res = publish_post((int)$result);
+
+    json_out([
+        'ok'        => true,
+        'id'        => $result,
+        'name'      => $label,
+        'published' => (bool)$res['ok'],
+        'error'     => $res['ok'] ? null : $res['message'],
+    ]);
+}
+
 json_fail('Unknown action.', 404);

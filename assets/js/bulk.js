@@ -290,6 +290,115 @@
       });
     },
 
+    /**
+     * Publish the whole batch immediately, one at a time.
+     *
+     * Sequential on purpose: each call talks to the network, and firing twenty
+     * at once would trip rate limits and give no usable progress. A short gap
+     * between posts keeps us well clear of Instagram's throttling.
+     */
+    publishAll: function () {
+      if (this.busy) { this.fail('Still uploading — give it a moment.'); return; }
+      if (!this.items.length) { this.fail('Add some images first.'); return; }
+
+      var accounts = $$('#b-accounts input:checked').map(function (i) { return Number(i.value); });
+      if (!accounts.length) { this.fail('Choose at least one channel.'); return; }
+
+      if (!confirm('Publish all ' + this.items.length + ' posts right now, one after another?\n\n' +
+                   'They go out immediately, not on the schedule above.')) return;
+
+      $('#bulk-error').classList.add('hide');
+
+      var self    = this;
+      var caption = $('#b-caption').value;
+      var queue   = this.items.slice();
+      var total   = queue.length;
+      var done    = 0, okCount = 0;
+      var failures = [];
+
+      var btn = $('#b-now');
+      btn.disabled = true;
+      $('#b-go').disabled = true;
+      $('#b-progress').classList.remove('hide');
+
+      function step() {
+        if (!queue.length) {
+          btn.disabled = false;
+          $('#b-go').disabled = false;
+          $('#b-progress').classList.add('hide');
+
+          if (failures.length) {
+            self.fail(okCount + ' published, ' + failures.length + ' failed: ' +
+              failures.slice(0, 3).map(function (f) { return f.name + ' (' + f.error + ')'; }).join('; ') +
+              (failures.length > 3 ? '…' : ''));
+          } else {
+            window.location.href = '/queue.php?status=published';
+          }
+          return;
+        }
+
+        var it  = queue.shift();
+        var idx = self.items.indexOf(it);
+
+        self.mark(idx, 'working', 'posting…');
+        $('#b-progress-text').textContent = 'Publishing ' + (done + 1) + ' of ' + total + '…';
+        $('#b-bar').style.width = Math.round((done / total) * 100) + '%';
+
+        fetch('/api/bulk.php?action=publish_one', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CFG.csrf },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            path:    it.path,
+            name:    it.name,
+            caption: it.caption && it.caption.trim() ? it.caption : caption,
+            accounts: accounts,
+            ratio:   $('#b-ratio').value,
+            link:    $('#b-link').value
+          })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok && data.published) {
+            okCount++;
+            self.mark(idx, 'ok', 'published');
+          } else {
+            var why = data.error || 'refused';
+            failures.push({ name: it.name, error: why });
+            self.mark(idx, 'bad', why);
+          }
+        })
+        .catch(function () {
+          failures.push({ name: it.name, error: 'network error' });
+          self.mark(idx, 'bad', 'network error');
+        })
+        .then(function () {
+          done++;
+          // A breath between posts - the networks throttle bursts.
+          setTimeout(step, 1500);
+        });
+      }
+
+      step();
+    },
+
+    /** Stamp a result onto one thumbnail in the grid. */
+    mark: function (index, state, text) {
+      var cell = document.querySelectorAll('#b-grid .bulk-item')[index];
+      if (!cell) return;
+      var thumb = cell.querySelector('.bulk-thumb');
+      if (!thumb) return;
+
+      var tag = thumb.querySelector('.bulk-result');
+      if (!tag) {
+        tag = document.createElement('span');
+        tag.className = 'bulk-result';
+        thumb.appendChild(tag);
+      }
+      tag.className = 'bulk-result is-' + state;
+      tag.textContent = text;
+    },
+
     applyTemplate: function (id) {
       var t = null;
       (CFG.templates || []).forEach(function (x) { if (x.id === Number(id)) t = x; });
