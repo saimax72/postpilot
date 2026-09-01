@@ -1836,11 +1836,14 @@ table.data tbody tr:hover { background: var(--line-soft); }
   /* Translucent so the artwork reads through, with a blur so the numbers stay
      legible over whatever part of the image they land on. Browsers without
      color-mix keep the solid card background declared above. */
-  background: color-mix(in srgb, var(--card) 74%, transparent);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-          backdrop-filter: blur(12px) saturate(1.2);
-  border-color: color-mix(in srgb, var(--line) 70%, transparent);
-  box-shadow: 0 6px 20px rgba(60, 50, 130, .10);
+  background: color-mix(in srgb, var(--card) 50%, transparent);
+  /* A lighter blur as well as a lighter fill: at 12px the artwork behind was
+     smeared to a wash, so dropping the opacity alone did not actually reveal
+     any more of it. */
+  -webkit-backdrop-filter: blur(5px) saturate(1.25);
+          backdrop-filter: blur(5px) saturate(1.25);
+  border-color: color-mix(in srgb, var(--line) 55%, transparent);
+  box-shadow: 0 6px 20px rgba(60, 50, 130, .09);
 }
 
 /* The banner is hidden below 700px, so the overlap has to go with it. */
