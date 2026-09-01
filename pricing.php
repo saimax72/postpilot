@@ -5,38 +5,6 @@ require_once __DIR__ . '/app/layout.php';
 $user  = auth_user();
 $inApp = (bool)$user;
 
-/** One plan card, used on both the public page and the signed-in view. */
-function plan_card(string $key, array $p, bool $current): string
-{
-    $out  = '<article class="price-card' . ($key === 'pro' ? ' is-featured' : '') . '">';
-    if ($key === 'pro') {
-        $out .= '<span class="price-tag">Everything unlocked</span>';
-    }
-    $out .= '<h3>' . e($p['label']) . '</h3>';
-    $out .= '<p class="price-amount">' . e($p['price'])
-          . ' <span>' . e($p['period']) . '</span></p>';
-    $out .= '<p class="price-blurb">' . e($p['blurb']) . '</p>';
-
-    $out .= '<ul class="price-list">';
-    foreach ($p['includes'] as $line) {
-        $out .= '<li class="yes">' . e($line) . '</li>';
-    }
-    foreach ($p['excludes'] as $line) {
-        $out .= '<li class="no">' . e($line) . '</li>';
-    }
-    $out .= '</ul>';
-
-    if ($current) {
-        $out .= '<span class="badge badge-scheduled">Your current plan</span>';
-    } elseif ($key === 'pro') {
-        $out .= '<a class="btn btn-block" href="mailto:' . e(owner_email()) . '?subject=' . rawurlencode('Upgrade to PostPilot Pro') . '">Upgrade to Pro</a>';
-    } elseif (!auth_user()) {
-        $out .= '<a class="btn btn-ghost btn-block" href="/register.php">Start free trial</a>';
-    }
-
-    return $out . '</article>';
-}
-
 $plans = plans();
 $now   = $user ? plan_key($user) : null;
 ?>
@@ -76,11 +44,11 @@ $now   = $user ? plan_key($user) : null;
     </div>
   </header>
 
-  <div style="text-align:center;padding:26px 0 4px">
-    <h1 style="font-family:var(--sans);font-weight:800;letter-spacing:-.03em;font-size:clamp(2rem,3.6vw,2.75rem);margin:0 0 12px">
+  <div style="padding:26px 0 4px">
+    <h2 class="pp-h2-center" style="font-size:clamp(2rem,3.6vw,2.75rem);font-weight:800;margin:0 0 12px">
       Start free for <?= TRIAL_DAYS ?> days
-    </h1>
-    <p class="muted" style="max-width:52ch;margin:0 auto">
+    </h2>
+    <p class="pp-h2-sub">
       Every feature is unlocked during the trial, capped at 10 scheduled posts a day.
       No card, and nothing is charged automatically when it ends.
     </p>

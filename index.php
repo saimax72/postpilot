@@ -45,11 +45,12 @@ $networks = [
       <a href="#features">Features</a>
       <a href="#platforms">Platforms</a>
       <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
     </nav>
     <div class="row">
       <a class="btn btn-ghost btn-sm" href="/login.php">Log in</a>
       <?php if (ALLOW_REGISTRATION): ?>
-        <a class="btn btn-sm" href="/register.php">Start free</a>
+        <a class="btn btn-sm" href="/register.php">Start free trial</a>
       <?php endif; ?>
     </div>
   </header>
@@ -185,6 +186,24 @@ $networks = [
     <?php endforeach; ?>
   </div>
 
+  <!-- ============================ Pricing =========================== -->
+  <span id="pricing" class="pp-anchor"></span>
+  <h2 class="pp-h2-center">Start free for <?= TRIAL_DAYS ?> days</h2>
+  <p class="pp-h2-sub">
+    Every feature is unlocked during the trial, capped at 10 scheduled posts a day.
+    No card, and nothing is charged automatically when it ends.
+  </p>
+
+  <div class="price-grid">
+    <?php foreach (plans() as $key => $p): ?>
+      <?= plan_card($key, $p) ?>
+    <?php endforeach; ?>
+  </div>
+
+  <p class="pp-h2-sub" style="margin-top:2px">
+    <a class="pp-textlink" href="/pricing.php">What happens when the trial ends &rarr;</a>
+  </p>
+
   <!-- ============================= CTA ============================== -->
   <section class="pp-cta">
     <img class="pp-cta-art" src="<?= asset('/assets/img/home/cta-art.jpg') ?>" alt="" loading="lazy">
@@ -209,6 +228,7 @@ $networks = [
       <a href="#features">Features</a>
       <a href="#platforms">Platforms</a>
       <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
       <a href="/login.php">Log in</a>
     </nav>
     <span class="tiny muted">&copy; <?= date('Y') ?> <?= e(APP_NAME) ?>. All rights reserved.</span>

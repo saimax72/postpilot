@@ -229,6 +229,47 @@ function plan_usage_rows(int $userId, ?array $user = null): array
 }
 
 /**
+ * One plan card. Used on the home page and the pricing page, so a change to
+ * either tier shows up in both places without being written down twice.
+ *
+ * The call to action depends on who is reading: a visitor who has not signed
+ * up yet is offered the trial on both cards, because "upgrade" is meaningless
+ * to someone without an account.
+ */
+function plan_card(string $key, array $p, bool $current = false): string
+{
+    $out  = '<article class="price-card' . ($key === 'pro' ? ' is-featured' : '') . '">';
+    if ($key === 'pro') {
+        $out .= '<span class="price-tag">Everything unlocked</span>';
+    }
+    $out .= '<h3>' . e($p['label']) . '</h3>';
+    $out .= '<p class="price-amount">' . e($p['price'])
+          . ' <span>' . e($p['period']) . '</span></p>';
+    $out .= '<p class="price-blurb">' . e($p['blurb']) . '</p>';
+
+    $out .= '<ul class="price-list">';
+    foreach ($p['includes'] as $line) {
+        $out .= '<li class="yes">' . e($line) . '</li>';
+    }
+    foreach ($p['excludes'] as $line) {
+        $out .= '<li class="no">' . e($line) . '</li>';
+    }
+    $out .= '</ul>';
+
+    if ($current) {
+        $out .= '<span class="badge badge-scheduled">Your current plan</span>';
+    } elseif (!auth_user()) {
+        $out .= '<a class="btn' . ($key === 'pro' ? '' : ' btn-ghost')
+              . ' btn-block" href="/register.php">Start free trial</a>';
+    } elseif ($key === 'pro') {
+        $out .= '<a class="btn btn-block" href="mailto:' . e(owner_email())
+              . '?subject=' . rawurlencode('Upgrade to PostPilot Pro') . '">Upgrade to Pro</a>';
+    }
+
+    return $out . '</article>';
+}
+
+/**
  * The strip shown across the top of the app while a trial is running.
  *
  * A limit the user cannot see is a limit they only discover by hitting it, so
@@ -294,7 +335,11 @@ function owner_email(): string
 {
     static $email = null;
     if ($email === null) {
-        $email = (string)db_value("SELECT email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
+        try {
+            $email = (string)db_value("SELECT email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
+        } catch (Throwable $e) {
+            $email = '';
+        }
     }
     return $email ?: '';
 }

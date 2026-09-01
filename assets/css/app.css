@@ -1660,3 +1660,9 @@ table.data tbody tr:hover { background: var(--line-soft); }
   background: var(--brand); transition: width .3s ease;
 }
 .plan-usage-row.is-full .plan-meter > span { background: var(--red); }
+
+/* Lede under a centred section heading. */
+.pp-h2-sub {
+  text-align: center; margin: 0 auto 6px;
+  max-width: 56ch; font-size: .9375rem; color: var(--muted);
+}
