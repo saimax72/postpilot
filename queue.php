@@ -88,7 +88,9 @@ layout_head('Queue', 'Queue', $actions);
     <?php foreach ([
         'all'       => 'All (' . $stats['total'] . ')',
         'scheduled' => 'Scheduled (' . $stats['scheduled'] . ')',
-        'published' => 'Published (' . $stats['published'] . ')',
+        // This tab lists demo publishes too, so its count has to include them
+        // or the number would disagree with the rows underneath it.
+        'published' => 'Published (' . ($stats['published'] + $stats['demo']) . ')',
         'draft'     => 'Drafts (' . $stats['drafts'] . ')',
         'failed'    => 'Failed (' . $stats['failed'] . ')',
     ] as $key => $label): ?>
@@ -168,6 +170,9 @@ layout_head('Queue', 'Queue', $actions);
 
         <div class="lv-side">
           <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
+          <?php if ($p['status'] === 'published' && post_was_demo($p)): ?>
+            <span class="badge badge-draft" title="Recorded as published, but the account had no credentials at the time so nothing was sent.">demo only</span>
+          <?php endif; ?>
           <?php if ($sent && $p['published_at']): ?>
             <span class="tiny muted"><?= e(time_ago($p['published_at'])) ?></span>
           <?php elseif (!$sent): ?>

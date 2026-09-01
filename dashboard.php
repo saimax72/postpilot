@@ -69,7 +69,15 @@ layout_head('Calendar', 'Calendar', $actions);
 
 <div class="stats">
   <div class="stat">          <div class="k">Scheduled</div><div class="v"><?= $stats['scheduled'] ?></div></div>
-  <div class="stat s-green">  <div class="k">Published</div><div class="v"><?= $stats['published'] ?></div></div>
+  <div class="stat s-green">
+    <div class="k">Published</div>
+    <div class="v"><?= $stats['published'] ?></div>
+    <?php if (!empty($stats['demo'])): ?>
+      <div class="stat-note" title="Marked published before the account had credentials, so nothing was sent.">
+        + <?= (int)$stats['demo'] ?> demo only
+      </div>
+    <?php endif; ?>
+  </div>
   <div class="stat s-yellow"> <div class="k">Drafts</div>   <div class="v"><?= $stats['drafts'] ?></div></div>
   <div class="stat s-red">    <div class="k">Failed</div>   <div class="v"><?= $stats['failed'] ?></div></div>
   <div class="stat s-pink">   <div class="k">Channels</div> <div class="v"><?= $stats['accounts'] ?></div></div>
@@ -233,6 +241,9 @@ $todayKey = $today->format('Y-m-d');
 
               <div class="lv-side">
                 <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
+          <?php if ($p['status'] === 'published' && post_was_demo($p)): ?>
+            <span class="badge badge-draft" title="Recorded as published, but the account had no credentials at the time so nothing was sent.">demo only</span>
+          <?php endif; ?>
                 <?php if ($p['status'] === 'published' && $p['published_at']): ?>
                   <span class="tiny muted"><?= e(time_ago($p['published_at'])) ?></span>
                 <?php endif; ?>

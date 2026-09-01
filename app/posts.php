@@ -289,14 +289,54 @@ function post_stats(int $userId): array
         [$userId]
     ) ?: [];
 
+    // Posts marked published where every target only ever recorded a demo id.
+    // Counting these alongside real ones makes the published figure disagree
+    // with the network, which is the one number a user will check against.
+    $demo = (int)db_value(
+        "SELECT COUNT(*) FROM posts p
+         WHERE p.user_id = ? AND p.status = 'published'
+           AND EXISTS (SELECT 1 FROM post_targets t WHERE t.post_id = p.id)
+           AND NOT EXISTS (
+                 SELECT 1 FROM post_targets t
+                 WHERE t.post_id = p.id AND t.status = 'published'
+                   AND (t.remote_post_id IS NULL OR t.remote_post_id NOT LIKE 'demo-%')
+               )",
+        [$userId]
+    );
+
     return [
         'scheduled' => (int)($row['scheduled'] ?? 0),
-        'published' => (int)($row['published'] ?? 0),
+        'published' => (int)($row['published'] ?? 0) - $demo,
+        'demo'      => $demo,
         'drafts'    => (int)($row['drafts'] ?? 0),
         'failed'    => (int)($row['failed'] ?? 0),
         'total'     => (int)($row['total'] ?? 0),
         'accounts'  => (int)db_value('SELECT COUNT(*) FROM social_accounts WHERE user_id = ?', [$userId]),
     ];
+}
+
+/**
+ * True when a post was "published" without anything being sent - every target
+ * recorded a demo id because the account had no credentials at the time.
+ *
+ * Worth surfacing: such a post sits in the published count looking identical to
+ * a real one, and the only way to notice is that the network disagrees.
+ */
+function post_was_demo(array $post): bool
+{
+    $targets = $post['targets'] ?? [];
+    if (!$targets) {
+        return false;
+    }
+    foreach ($targets as $t) {
+        if (($t['status'] ?? '') !== 'published') {
+            continue;
+        }
+        if (!str_starts_with((string)($t['remote_post_id'] ?? ''), 'demo-')) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /* ---------------- Uploads ---------------- */

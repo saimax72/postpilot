@@ -1067,3 +1067,8 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .bulk-result.is-working { background: rgba(20, 22, 28, .8); color: #fff; }
 .bulk-result.is-ok      { background: var(--green);        color: #fff; }
 .bulk-result.is-bad     { background: var(--red);          color: #fff; }
+
+.stat-note {
+  margin-top: 4px; font-size: .6875rem; font-weight: 600;
+  color: var(--muted); letter-spacing: .01em;
+}
