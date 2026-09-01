@@ -110,6 +110,7 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
       <?= nav_link('/admin/index.php', 'shield', 'Admin overview', $current) ?>
       <?= nav_link('/admin/users.php', 'users',  'All users',      $current) ?>
       <?= nav_link('/admin/posts.php', 'chart',  'All posts',      $current) ?>
+      <?= nav_link('/admin/billing.php', 'sparkle', 'Payments',    $current) ?>
       <?= nav_link('/admin/activity.php', 'clock', 'Activity log',  $current) ?>
     <?php endif; ?>
 

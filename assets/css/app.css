@@ -1755,3 +1755,19 @@ table.data tbody tr:hover { background: var(--line-soft); }
   border-color: rgba(124, 108, 246, .45);
   box-shadow: none;
 }
+
+/* ---------- Admin payment settings ---------- */
+
+/* Only the chosen provider's fields are shown; the others stay in the DOM so a
+   half-filled form is not lost when the radio changes. */
+.prov-panel { display: none; padding: 4px 0 8px; }
+.prov-panel.show { display: block; }
+
+.hook-url {
+  padding: 12px 14px; border-radius: var(--r);
+  background: var(--line-soft); border: 1px solid var(--line);
+  overflow-x: auto;
+}
+.hook-url code {
+  font-size: .8125rem; white-space: nowrap; color: var(--ink);
+}

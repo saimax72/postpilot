@@ -41,8 +41,11 @@ function plans(): array
 
         'pro' => [
             'label'  => 'Pro',
-            'price'  => '$12',
-            'period' => 'per month',
+            // Set by an administrator on /admin/billing.php, so a price change
+            // does not need a deploy. Falls back to the default before the
+            // settings table exists.
+            'price'  => billing_price_label(),
+            'period' => billing_period_label(),
             'blurb'  => 'For anyone posting regularly.',
             'limits' => [
                 'posts_per_day' => 0,          // 0 means no limit
@@ -262,7 +265,9 @@ function plan_card(string $key, array $p, bool $current = false): string
         $out .= '<a class="btn' . ($key === 'pro' ? '' : ' btn-ghost')
               . ' btn-block" href="/register.php">Start free trial</a>';
     } elseif ($key === 'pro') {
-        $out .= '<a class="btn btn-block" href="mailto:' . e(owner_email())
+        $out .= billing_enabled()
+            ? '<a class="btn btn-block" href="/upgrade.php">Upgrade to Pro</a>'
+            : '<a class="btn btn-block" href="mailto:' . e(owner_email())
               . '?subject=' . rawurlencode('Upgrade to PostPilot Pro') . '">Upgrade to Pro</a>';
     }
 

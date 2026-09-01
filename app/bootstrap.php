@@ -58,6 +58,7 @@ HTML;
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/platforms.php';
+require_once __DIR__ . '/settings_store.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/plans.php';
 require_once __DIR__ . '/media.php';
@@ -67,6 +68,7 @@ require_once __DIR__ . '/posts.php';
 require_once __DIR__ . '/publisher.php';
 require_once __DIR__ . '/instagram.php';
 require_once __DIR__ . '/oauth.php';   // needs http_get() and graph_error() from publisher.php
+require_once __DIR__ . '/billing.php'; // needs http_json() from publisher.php
 
 if (session_status() === PHP_SESSION_NONE) {
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
