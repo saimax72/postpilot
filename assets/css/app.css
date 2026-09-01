@@ -1093,6 +1093,14 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .site-head .brand { padding: 0; }
 .site-head .brand-logo-set { max-width: 156px; }
 
+/* The home page has room for a larger mark than the app chrome does. */
+.pp-head .brand-logo-set { max-width: 230px; }
+.pp-foot .brand-logo-set { max-width: 168px; }
+
+@media (max-width: 700px) {
+  .pp-head .brand-logo-set { max-width: 176px; }
+}
+
 .auth-form .brand-logo-set { max-width: 176px; margin-bottom: 4px; }
 
 @media (max-width: 780px) {
@@ -1208,7 +1216,6 @@ table.data tbody tr:hover { background: var(--line-soft); }
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
   padding: 6px 4px 2px;
 }
-.pp-head .brand-logo-set { max-width: 150px; }
 
 .pp-nav { display: flex; align-items: center; gap: 30px; }
 .pp-nav a {
@@ -1374,7 +1381,6 @@ table.data tbody tr:hover { background: var(--line-soft); }
   border-top: 1px solid var(--line);
   padding: 24px 4px 4px; margin-top: 6px;
 }
-.pp-foot .brand-logo-set { max-width: 128px; }
 
 /* ---------- Responsive ---------- */
 
