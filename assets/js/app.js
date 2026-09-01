@@ -401,6 +401,11 @@
       $('#c-dropzone').classList.toggle('hide', sent || !!this.mediaUrl);
       $('#composer').classList.toggle('is-sent', sent);
 
+      // Nothing here can act on a post that has gone out: no template to apply,
+      // no crop to change. Hiding them leaves the record and drops the controls.
+      var tpl = $('#c-tpl-bar');
+      if (tpl) tpl.classList.toggle('hide', sent);
+
       var banner = $('#c-sent');
       if (!sent) { banner.classList.add('hide'); return; }
 

@@ -1405,3 +1405,27 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 [data-theme="dark"] .pp-home .brand-logo.on-light { display: block; }
 [data-theme="dark"] .pp-home .brand-logo.on-dark  { display: none; }
+
+/* ---------- Composer: read-only layout ---------- */
+
+/*
+ * A published post has nothing to crop, so the media column is redundant with
+ * the preview beside it - which already shows the exact image that posted.
+ * Dropping it turns three columns into two and removes the tall empty gap the
+ * short left column used to leave.
+ */
+.is-sent .composer { grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
+.is-sent .composer-media { display: none; }
+
+/* Inert controls read as broken; better absent. */
+.is-sent .crop-controls,
+.is-sent #c-crop-hint,
+.is-sent .set-bar,
+.is-sent #c-counter,
+.is-sent #c-tag-count { display: none; }
+
+.is-sent .more-options summary { color: var(--muted); cursor: default; }
+
+@media (max-width: 900px) {
+  .is-sent .composer { grid-template-columns: 1fr; }
+}

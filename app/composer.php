@@ -29,14 +29,14 @@
         <div id="c-note"  class="alert alert-success hide"></div>
 
         <!-- Shown instead of the editor once a post has gone out. -->
-        <div id="c-sent" class="alert alert-info hide" style="display:block">
+        <div id="c-sent" class="alert alert-info hide">
           <strong id="c-sent-head"></strong>
           <div id="c-sent-body" class="small" style="margin-top:8px"></div>
         </div>
 
         <?php $templates = templates_for_user((int)auth_id()); ?>
         <?php if ($templates): ?>
-          <div class="tpl-bar">
+          <div class="tpl-bar" id="c-tpl-bar">
             <span class="tiny muted nowrap">Start from</span>
             <?php foreach ($templates as $tpl): ?>
               <button type="button" class="tpl-chip" data-tpl="<?= (int)$tpl['id'] ?>">
