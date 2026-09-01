@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <ul>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Instagram, Facebook, TikTok, LinkedIn, X, Threads, Pinterest &amp; YouTube</li>
+      <li><span class="tick"><?= icon('check', 12) ?></span> Publishes to Instagram, Facebook, Threads, LinkedIn &amp; X</li>
       <li><span class="tick"><?= icon('check', 12) ?></span> Drag posts between days to reshuffle a week in seconds</li>
       <li><span class="tick"><?= icon('check', 12) ?></span> Runs on your own hosting — your data stays yours</li>
     </ul>

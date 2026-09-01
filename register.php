@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <ul>
         <li><span class="tick"><?= icon('check', 12) ?></span> Every feature unlocked</li>
         <li><span class="tick"><?= icon('check', 12) ?></span> <strong>10 scheduled posts a day</strong></li>
-        <li><span class="tick"><?= icon('check', 12) ?></span> All 8 networks, unlimited channels</li>
+        <li><span class="tick"><?= icon('check', 12) ?></span> 5 networks publishing, unlimited channels</li>
         <li><span class="tick"><?= icon('check', 12) ?></span> Bulk upload, templates, hashtag sets</li>
       </ul>
     </div>

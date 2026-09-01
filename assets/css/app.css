@@ -1711,3 +1711,13 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 640px) {
   .guide-art { max-width: none; }
 }
+
+/* A network that connects but cannot publish yet. Dimmed rather than disabled:
+   scheduling to it still works, and demo mode is a legitimate thing to want. */
+.acct.is-soon { opacity: .72; }
+.acct .soon {
+  margin-left: 2px; padding: 1px 6px; border-radius: 999px;
+  font-size: .625rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase;
+  background: rgba(148, 163, 184, .24); color: var(--muted);
+}

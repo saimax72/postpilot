@@ -15,17 +15,6 @@ require_once __DIR__ . '/app/layout.php';
 
 $user = require_login();
 
-/**
- * Which networks can publish for real.
- *
- * Everything else connects and schedules fine but stops at the publish step,
- * so it is listed as demo-only rather than quietly failing at send time.
- */
-function guide_live_platforms(): array
-{
-    return ['facebook', 'instagram', 'threads', 'linkedin', 'x'];
-}
-
 /** A left-to-right chain of labelled boxes. Purely illustrative. */
 function guide_flow(array $steps, string $color = '#5b4bd6'): string
 {
@@ -128,8 +117,6 @@ function guide_step(int $n, string $title, string $body): string
          . '<div><h4>' . $title . '</h4><p>' . $body . '</p></div></li>';
 }
 
-$live = guide_live_platforms();
-
 layout_head('Connecting accounts', 'Connecting your accounts',
     '<a class="btn btn-ghost" href="/accounts.php">' . icon('link', 16) . ' Back to accounts</a>');
 ?>
@@ -191,7 +178,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
               </div>
             </td>
             <td>
-              <?php if (in_array($key, $live, true)): ?>
+              <?php if (platform_live($key)): ?>
                 <span class="badge badge-published">publishes live</span>
               <?php else: ?>
                 <span class="badge">demo only</span>

@@ -76,13 +76,19 @@ layout_head('Accounts', 'Connected accounts',
       <span class="label">Network</span>
       <div class="acct-picker" id="platform-picker">
         <?php foreach (platforms() as $key => $p): ?>
-          <label class="acct">
+          <label class="acct<?= platform_live($key) ? '' : ' is-soon' ?>">
             <input type="radio" name="platform" value="<?= e($key) ?>" required>
             <span class="pdot pdot-sm" style="background:<?= e($p['color']) ?>"><?= platform_icon($key, 10) ?></span>
             <?= e($p['label']) ?>
+            <?php if (!platform_live($key)): ?><span class="soon">soon</span><?php endif; ?>
           </label>
         <?php endforeach; ?>
       </div>
+      <span class="hint">
+        Networks marked <strong>soon</strong> can be scheduled to, but cannot publish yet &mdash;
+        posts aimed at them fail at send time.
+        <a href="/connect.php">More about connecting &rarr;</a>
+      </span>
     </div>
 
     <div class="row" style="gap:16px;align-items:flex-start;flex-wrap:wrap">
@@ -161,6 +167,9 @@ layout_head('Accounts', 'Connected accounts',
             <span class="pdot" style="background:<?= e($p['color']) ?>;width:30px;height:30px"><?= platform_icon($platform, 15) ?></span>
             <h3><?= e($p['label']) ?></h3>
             <span class="badge"><?= count($list) ?> account<?= count($list) === 1 ? '' : 's' ?></span>
+            <?php if (!platform_live($platform)): ?>
+              <span class="badge badge-publishing" title="No publishing driver yet - posts aimed here fail at send time">cannot publish yet</span>
+            <?php endif; ?>
           </div>
           <a class="small" href="<?= e($p['docs']) ?>" target="_blank" rel="noopener noreferrer">API docs ↗</a>
         </div>

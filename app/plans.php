@@ -31,7 +31,7 @@ function plans(): array
             'includes' => [
                 'Every feature, unlocked',
                 '10 scheduled posts a day',
-                'All 8 networks, unlimited channels',
+                '5 networks publishing, unlimited channels',
                 'Bulk upload, templates, hashtag sets',
             ],
             'excludes' => [

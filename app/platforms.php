@@ -8,6 +8,7 @@ function platforms(): array
 {
     return [
         'facebook' => [
+            'live'       => true,
             'label'      => 'Facebook',
             'color'      => '#1877F2',
             'limit'      => 63206,
@@ -16,6 +17,7 @@ function platforms(): array
             'oauth_note' => 'Meta Graph API — needs a Facebook App with pages_manage_posts.',
         ],
         'instagram' => [
+            'live'       => true,
             'label'      => 'Instagram',
             'color'      => '#E1306C',
             'limit'      => 2200,
@@ -25,6 +27,7 @@ function platforms(): array
             'oauth_note' => 'Instagram Graph API — business account linked to a Facebook Page.',
         ],
         'x' => [
+            'live'       => true,
             'label'      => 'X (Twitter)',
             'color'      => '#0F172A',
             'limit'      => 280,
@@ -33,6 +36,7 @@ function platforms(): array
             'oauth_note' => 'X API v2 — OAuth 2.0 with tweet.write scope.',
         ],
         'linkedin' => [
+            'live'       => true,
             'label'      => 'LinkedIn',
             'color'      => '#0A66C2',
             'limit'      => 3000,
@@ -41,6 +45,7 @@ function platforms(): array
             'oauth_note' => 'LinkedIn Marketing API — w_member_social scope.',
         ],
         'threads' => [
+            'live'       => true,
             'label'      => 'Threads',
             'color'      => '#000000',
             'limit'      => 500,
@@ -49,6 +54,7 @@ function platforms(): array
             'oauth_note' => 'Threads API — same Meta app as Instagram.',
         ],
         'tiktok' => [
+            'live'       => false,
             'label'      => 'TikTok',
             'color'      => '#00F2EA',
             'limit'      => 2200,
@@ -58,6 +64,7 @@ function platforms(): array
             'oauth_note' => 'TikTok Content Posting API — video.publish scope.',
         ],
         'youtube' => [
+            'live'       => false,
             'label'      => 'YouTube',
             'color'      => '#FF0000',
             'limit'      => 5000,
@@ -67,6 +74,7 @@ function platforms(): array
             'oauth_note' => 'YouTube Data API v3 — youtube.upload scope.',
         ],
         'pinterest' => [
+            'live'       => false,
             'label'      => 'Pinterest',
             'color'      => '#E60023',
             'limit'      => 500,
@@ -81,6 +89,24 @@ function platforms(): array
 function platform(string $key): ?array
 {
     return platforms()[$key] ?? null;
+}
+
+/**
+ * Whether this network has a publishing driver in app/publisher.php.
+ *
+ * A network without one still connects and schedules, then fails at send time,
+ * so the interface says so up front instead of letting someone plan a month
+ * into a dead end. Add a driver, flip the flag.
+ */
+function platform_live(string $key): bool
+{
+    return (bool)(platforms()[$key]['live'] ?? false);
+}
+
+/** Networks that can actually publish. */
+function platforms_live(): array
+{
+    return array_filter(platforms(), fn($p) => !empty($p['live']));
 }
 
 function platform_label(string $key): string
