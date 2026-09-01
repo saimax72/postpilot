@@ -97,10 +97,30 @@ layout_head('Queue', 'Queue', $actions);
       <a class="<?= $filter === $key ? 'on' : '' ?>" href="?status=<?= $key ?>"><?= e($label) ?></a>
     <?php endforeach; ?>
   </span>
-  <?php if (!empty($_GET['date'])): ?>
-    <a class="btn btn-ghost btn-sm" href="?status=<?= e($filter) ?>">Clear date filter</a>
-  <?php endif; ?>
+  <div class="row" style="gap:8px">
+    <?php if (!empty($_GET['date'])): ?>
+      <a class="btn btn-ghost btn-sm" href="?status=<?= e($filter) ?>">Clear date filter</a>
+    <?php endif; ?>
+    <?php if ($stats['failed']): ?>
+      <button class="btn btn-soft btn-sm" type="button" onclick="Retry.all(<?= (int)$stats['failed'] ?>)">
+        Retry all <?= (int)$stats['failed'] ?> failed
+      </button>
+    <?php endif; ?>
+  </div>
 </div>
+
+<?php if ($filter === 'failed' && $posts): ?>
+  <div class="alert alert-warn" style="margin-bottom:20px">
+    <?= icon('clock', 18) ?>
+    <span>
+      <strong>Most bulk failures are rate limits, not rejected posts.</strong>
+      Instagram accepts <strong>25 posts per rolling 24 hours</strong>; past that it returns
+      <span class="mono">Application request limit reached</span> or
+      <span class="mono">User is performing too many actions</span>. Retrying straight away hits the
+      same wall — <strong>Retry all</strong> spaces them an hour apart so they drain gradually.
+    </span>
+  </div>
+<?php endif; ?>
 
 <?php if (!$posts): ?>
 
@@ -170,6 +190,10 @@ layout_head('Queue', 'Queue', $actions);
 
         <div class="lv-side">
           <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
+          <?php if ($p['status'] === 'failed'): ?>
+            <button class="btn btn-soft btn-sm" type="button"
+                    onclick="event.stopPropagation(); Retry.one(<?= (int)$p['id'] ?>, this)">Retry</button>
+          <?php endif; ?>
           <?php if ($p['status'] === 'published' && post_was_demo($p)): ?>
             <span class="badge badge-draft" title="Recorded as published, but the account had no credentials at the time so nothing was sent.">demo only</span>
           <?php endif; ?>
@@ -184,6 +208,43 @@ layout_head('Queue', 'Queue', $actions);
   </div>
 
 <?php endif; ?>
+
+<script>
+window.Retry = {
+  send: function (body, done) {
+    fetch('/api/posts.php?action=retry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'X-CSRF-Token': document.querySelector('input[name="_csrf"]').value },
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
+    })
+    .then(function (r) { return r.json(); })
+    .then(done)
+    .catch(function () { alert('Network error — nothing was requeued.'); });
+  },
+
+  one: function (id, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Queueing…';
+    this.send({ id: id }, function (data) {
+      if (data.ok) { window.location.reload(); }
+      else { btn.disabled = false; btn.textContent = 'Retry'; alert(data.error || 'Could not requeue.'); }
+    });
+  },
+
+  all: function (n) {
+    if (!confirm('Requeue all ' + n + ' failed posts?
+
+' +
+                 'They are spaced an hour apart so they do not hit the same rate limit again.')) return;
+    this.send({ all: true, spacing: 60 }, function (data) {
+      if (data.ok) { window.location.reload(); }
+      else { alert(data.error || 'Could not requeue.'); }
+    });
+  }
+};
+</script>
 
 <?php
 require __DIR__ . '/app/composer.php';

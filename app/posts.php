@@ -276,6 +276,61 @@ function post_reschedule(int $id, int $userId, string $scheduledUtc): bool
     return $st->rowCount() > 0;
 }
 
+/**
+ * Put a failed post back in the queue.
+ *
+ * Clears the error and the attempt count, and resets any target that failed so
+ * it is tried again - a target already published is left alone, so a post that
+ * half-succeeded does not double-post to the network that worked.
+ */
+function post_retry(int $id, int $userId, ?string $whenUtc = null): bool
+{
+    $post = db_one("SELECT * FROM posts WHERE id = ? AND user_id = ? AND status = 'failed'", [$id, $userId]);
+    if (!$post) {
+        return false;
+    }
+
+    db_run(
+        "UPDATE posts
+            SET status = 'scheduled', attempts = 0, last_error = NULL,
+                scheduled_at = ?
+          WHERE id = ? AND user_id = ?",
+        [$whenUtc ?: gmdate('Y-m-d H:i:s'), $id, $userId]
+    );
+
+    db_run("UPDATE post_targets SET status = 'pending', error = NULL
+             WHERE post_id = ? AND status = 'failed'", [$id]);
+
+    return true;
+}
+
+/**
+ * Requeue every failed post, spaced out.
+ *
+ * Spacing is the point: these fail in bulk because a network throttled a burst,
+ * and firing them all again at once reproduces exactly that. Returns how many
+ * were requeued and when the last one is due.
+ */
+function post_retry_all(int $userId, int $spacingMinutes = 60): array
+{
+    $ids = db_all(
+        "SELECT id FROM posts WHERE user_id = ? AND status = 'failed' ORDER BY scheduled_at ASC",
+        [$userId]
+    );
+
+    $when  = time() + 120;          // a couple of minutes to breathe
+    $count = 0;
+
+    foreach ($ids as $row) {
+        if (post_retry((int)$row['id'], $userId, gmdate('Y-m-d H:i:s', $when))) {
+            $count++;
+            $when += $spacingMinutes * 60;
+        }
+    }
+
+    return ['count' => $count, 'last' => $count ? gmdate('Y-m-d H:i:s', $when - $spacingMinutes * 60) : null];
+}
+
 function post_stats(int $userId): array
 {
     $row = db_one(

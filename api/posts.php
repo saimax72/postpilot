@@ -188,6 +188,29 @@ if ($action === 'save_template') {
     json_out(['ok' => true, 'id' => $result]);
 }
 
+/* --------------------------------------------------------------- retry ---- */
+
+if ($action === 'retry') {
+    $body = json_body();
+
+    if (!empty($body['all'])) {
+        $spacing = max(5, min(240, (int)($body['spacing'] ?? 60)));
+        $res = post_retry_all($uid, $spacing);
+        log_activity($uid, 'post_retry_all', $res['count'] . ' posts requeued');
+        json_out(['ok' => true] + $res);
+    }
+
+    $id = (int)($body['id'] ?? 0);
+    if (!$id) {
+        json_fail('Missing post id.');
+    }
+    if (!post_retry($id, $uid)) {
+        json_fail('That post is not in a failed state.');
+    }
+    log_activity($uid, 'post_retry', 'Post #' . $id);
+    json_out(['ok' => true, 'count' => 1]);
+}
+
 /* ---------------------------------------------------------------- move ---- */
 
 if ($action === 'move') {
