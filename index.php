@@ -28,7 +28,7 @@ $platforms = platforms();
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="/" style="padding:0">
-      <span class="brand-plaque"><img class="brand-logo" src="<?= asset('/assets/img/logo.png') ?>" alt="<?= e(APP_NAME) ?>"></span>
+      <?= brand_logo() ?>
     </a>
     <nav class="site-nav">
       <a href="#features">Features</a>

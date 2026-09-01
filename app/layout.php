@@ -36,6 +36,24 @@ function icon(string $name, int $size = 18): string
          . ($p[$name] ?? '') . '</svg>';
 }
 
+/**
+ * The brand logo, in both inks.
+ *
+ * The wordmark exists as dark-on-light and light-on-dark artwork; which one is
+ * correct depends on the surface, not the page. Both are emitted and CSS picks,
+ * so the sidebar (always dark) and the light pages can differ from each other
+ * while still following the theme toggle.
+ */
+function brand_logo(): string
+{
+    return '<span class="brand-logo-set">'
+         . '<img class="brand-logo on-light" src="' . asset('/assets/img/logo-on-light.png')
+         . '" alt="' . e(APP_NAME) . '">'
+         . '<img class="brand-logo on-dark" src="' . asset('/assets/img/logo-on-dark.png')
+         . '" alt="" aria-hidden="true">'
+         . '</span>';
+}
+
 function nav_link(string $href, string $iconName, string $label, string $current, ?int $count = null): string
 {
     $active = basename(parse_url($href, PHP_URL_PATH)) === $current ? ' active' : '';
@@ -71,7 +89,7 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <a class="brand" href="/dashboard.php">
-      <img class="brand-logo" src="<?= asset('/assets/img/logo.png') ?>" alt="<?= e(APP_NAME) ?>">
+      <?= brand_logo() ?>
     </a>
 
     <?= nav_link('/dashboard.php', 'calendar', 'Calendar',  $current) ?>

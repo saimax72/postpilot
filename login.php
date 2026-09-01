@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="auth-panel">
     <div class="auth-form">
       <a class="brand" href="/" style="padding:0">
-        <span class="brand-plaque"><img class="brand-logo" src="<?= asset('/assets/img/logo.png') ?>" alt="<?= e(APP_NAME) ?>"></span>
+        <?= brand_logo() ?>
       </a>
 
       <h1 style="margin-top:18px">Welcome back</h1>
