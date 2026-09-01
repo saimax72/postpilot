@@ -234,10 +234,8 @@ window.Retry = {
   },
 
   all: function (n) {
-    if (!confirm('Requeue all ' + n + ' failed posts?
-
-' +
-                 'They are spaced an hour apart so they do not hit the same rate limit again.')) return;
+    if (!confirm('Requeue all ' + n + ' failed posts? They are spaced an hour apart '
+               + 'so they do not hit the same rate limit again.')) return;
     this.send({ all: true, spacing: 60 }, function (data) {
       if (data.ok) { window.location.reload(); }
       else { alert(data.error || 'Could not requeue.'); }
