@@ -211,6 +211,63 @@ if ($action === 'retry') {
     json_out(['ok' => true, 'count' => 1]);
 }
 
+/* --------------------------------------------------------- publish_now ---- */
+
+/*
+ * Publish an existing post right now, skipping the queue entirely.
+ *
+ * Works from either a failed or a scheduled post: both are reset the same way
+ * retry does, then claimed and published inline so the caller gets the
+ * network's answer instead of waiting for the next worker run.
+ */
+if ($action === 'publish_now') {
+    @set_time_limit(120);
+
+    $id = (int)(json_body()['id'] ?? 0);
+    if (!$id) {
+        json_fail('Missing post id.');
+    }
+
+    $post = db_one(
+        "SELECT * FROM posts WHERE id = ? AND user_id = ? AND status IN ('failed','scheduled','draft')",
+        [$id, $uid]
+    );
+    if (!$post) {
+        json_fail('That post cannot be published — it may have gone out already.');
+    }
+
+    // Same reset as a retry: clear the error and the attempt count, and put any
+    // failed target back to pending. Targets that already published are left
+    // alone so a half-successful post cannot double-post.
+    db_run(
+        "UPDATE posts SET status='scheduled', attempts=0, last_error=NULL, scheduled_at=?
+          WHERE id=? AND user_id=?",
+        [gmdate('Y-m-d H:i:s'), $id, $uid]
+    );
+    db_run("UPDATE post_targets SET status='pending', error=NULL
+             WHERE post_id=? AND status='failed'", [$id]);
+
+    $claimed = db_run(
+        "UPDATE posts SET status='publishing', attempts=attempts+1
+          WHERE id=? AND status='scheduled'",
+        [$id]
+    )->rowCount();
+
+    if (!$claimed) {
+        json_out(['ok' => true, 'published' => false,
+                  'message' => 'The worker picked this post up first — check the queue for the outcome.']);
+    }
+
+    $res = publish_post($id);
+    log_activity($uid, 'post_publish_now', 'Post #' . $id . ($res['ok'] ? ' published' : ' failed'));
+
+    json_out([
+        'ok'        => true,
+        'published' => (bool)$res['ok'],
+        'message'   => $res['ok'] ? 'Published.' : $res['message'],
+    ]);
+}
+
 /* ---------------------------------------------------------------- move ---- */
 
 if ($action === 'move') {

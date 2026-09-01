@@ -103,7 +103,7 @@ layout_head('Queue', 'Queue', $actions);
     <?php endif; ?>
     <?php if ($stats['failed']): ?>
       <button class="btn btn-soft btn-sm" type="button" onclick="Retry.all(<?= (int)$stats['failed'] ?>)">
-        Retry all <?= (int)$stats['failed'] ?> failed
+        Requeue all <?= (int)$stats['failed'] ?> failed
       </button>
     <?php endif; ?>
   </div>
@@ -117,7 +117,7 @@ layout_head('Queue', 'Queue', $actions);
       Instagram accepts <strong>25 posts per rolling 24 hours</strong>; past that it returns
       <span class="mono">Application request limit reached</span> or
       <span class="mono">User is performing too many actions</span>. Retrying straight away hits the
-      same wall — <strong>Retry all</strong> spaces them an hour apart so they drain gradually.
+      same wall — <strong>Requeue all</strong> spaces them an hour apart so they drain gradually, and <strong>Publish now</strong> sends one immediately if you want to test.
     </span>
   </div>
 <?php endif; ?>
@@ -190,9 +190,15 @@ layout_head('Queue', 'Queue', $actions);
 
         <div class="lv-side">
           <span class="badge badge-<?= e($p['status']) ?>"><?= e($p['status']) ?></span>
-          <?php if ($p['status'] === 'failed'): ?>
+          <?php if (in_array($p['status'], ['failed', 'scheduled', 'draft'], true)): ?>
             <button class="btn btn-soft btn-sm" type="button"
-                    onclick="event.stopPropagation(); Retry.one(<?= (int)$p['id'] ?>, this)">Retry</button>
+                    title="Publish straight away instead of waiting for the scheduler"
+                    onclick="event.stopPropagation(); Retry.now(<?= (int)$p['id'] ?>, this)">Publish now</button>
+          <?php endif; ?>
+          <?php if ($p['status'] === 'failed'): ?>
+            <button class="btn btn-ghost btn-sm" type="button"
+                    title="Put it back in the queue for the next scheduled run"
+                    onclick="event.stopPropagation(); Retry.one(<?= (int)$p['id'] ?>, this)">Requeue</button>
           <?php endif; ?>
           <?php if ($p['status'] === 'published' && post_was_demo($p)): ?>
             <span class="badge badge-draft" title="Recorded as published, but the account had no credentials at the time so nothing was sent.">demo only</span>
@@ -224,12 +230,39 @@ window.Retry = {
     .catch(function () { alert('Network error — nothing was requeued.'); });
   },
 
+  now: function (id, btn) {
+    if (!confirm('Publish this post right now?')) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Publishing…';
+
+    fetch('/api/posts.php?action=publish_now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'X-CSRF-Token': document.querySelector('input[name="_csrf"]').value },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id: id })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.ok && data.published) { window.location.reload(); return; }
+      btn.disabled = false;
+      btn.textContent = 'Publish now';
+      alert('Not published — ' + (data.message || data.error || 'the network refused it.'));
+    })
+    .catch(function () {
+      btn.disabled = false;
+      btn.textContent = 'Publish now';
+      alert('Network error — nothing was published.');
+    });
+  },
+
   one: function (id, btn) {
     btn.disabled = true;
     btn.textContent = 'Queueing…';
     this.send({ id: id }, function (data) {
       if (data.ok) { window.location.reload(); }
-      else { btn.disabled = false; btn.textContent = 'Retry'; alert(data.error || 'Could not requeue.'); }
+      else { btn.disabled = false; btn.textContent = 'Requeue'; alert(data.error || 'Could not requeue.'); }
     });
   },
 
