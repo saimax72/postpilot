@@ -1087,3 +1087,24 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 780px) {
   .hero-banner { border-radius: var(--r-lg); margin-bottom: 22px; }
 }
+
+/* ---------- Auth page visual ---------- */
+
+.auth-visual {
+  margin: 26px 0 6px;
+  border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: 0 18px 44px rgba(15, 18, 40, .32);
+}
+.auth-visual img { width: 100%; height: auto; display: block; }
+
+/* Below this the aside stacks above the form, and a large decorative image
+   would push the login fields off the first screen. The bullets stay. */
+@media (max-width: 900px) {
+  .auth-visual { display: none; }
+}
+
+/* Short viewports have the same problem without being narrow. */
+@media (max-height: 720px) {
+  .auth-visual { display: none; }
+}

@@ -77,10 +77,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <span class="blob b2"></span>
     <h2>Schedule social media posts across every platform from one calendar</h2>
     <p>Plan the month, then let the queue publish for you.</p>
+
+    <div class="auth-visual">
+      <img src="<?= asset('/assets/img/login-visual.jpg') ?>" width="1200" height="800"
+           alt="A desk with the PostPilot calendar open on a monitor, an engagement chart beside it, and Instagram, Facebook, TikTok, YouTube, LinkedIn and X icons along the desktop.">
+    </div>
+
     <ul>
       <li><span class="tick"><?= icon('check', 12) ?></span> Instagram, Facebook, TikTok, LinkedIn, X, Threads, Pinterest &amp; YouTube</li>
       <li><span class="tick"><?= icon('check', 12) ?></span> Drag posts between days to reshuffle a week in seconds</li>
-      <li><span class="tick"><?= icon('check', 12) ?></span> Live per-network previews and character limits</li>
       <li><span class="tick"><?= icon('check', 12) ?></span> Runs on your own hosting — your data stays yours</li>
     </ul>
   </aside>
