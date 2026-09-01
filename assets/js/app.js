@@ -304,6 +304,7 @@
       $('#c-delete').classList.add('hide');
       $('#c-template-id').value = '';
       this.activeTemplate = null;
+      this.postCrop = null;
       $$('#composer .tpl-chip').forEach(function (c) { c.classList.remove('on'); });
       $('#composer-title').textContent = 'New post';
       this.clearMedia();
@@ -330,6 +331,8 @@
             var more = document.querySelector('.more-options');
             if (more) more.open = true;
         }
+
+        this.postCrop = post.crop || null;
 
         if (post.original) {
           $('#c-media-original').value = post.media_original || '';
@@ -532,7 +535,16 @@
         media.classList.remove('hide');
 
         var frame = $('#pv-frame'), img = $('#pv-img');
-        var b  = Cropper.box();
+
+        /*
+         * Cropper.box() measures the crop frame. On a published post that frame
+         * is hidden, so it measures zero - and a zero-width box makes the
+         * preview image pw/0 wide, which renders as an enormous zoom. Fall back
+         * to the crop stored on the post whenever the frame is not laid out.
+         */
+        var live = Cropper.ready && Cropper.frame() && Cropper.frame().clientWidth > 0;
+        var b = live ? Cropper.box()
+                     : (Composer.postCrop || { fx: 0, fy: 0, fw: 1, fh: 1 });
 
         // Same height budget as the cropper, so a tall preview cannot run off
         // the bottom of the panel.
