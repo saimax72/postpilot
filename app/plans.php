@@ -88,7 +88,9 @@ function is_admin_user(?array $user = null): bool
 function trial_ends(?array $user = null): ?string
 {
     $user = $user ?: auth_user();
-    if (!$user || plan_key($user) !== 'trial') {
+    // Administrators are exempt from limits, so a countdown for them would be
+    // a deadline that never arrives. Say nothing instead.
+    if (!$user || is_admin_user($user) || plan_key($user) !== 'trial') {
         return null;
     }
     // Falls back to the signup date so an account created before trials
