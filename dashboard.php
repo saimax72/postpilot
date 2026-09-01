@@ -90,6 +90,13 @@ layout_head('Calendar', 'Calendar', $actions);
     <a class="btn btn-ghost btn-sm" href="?view=<?= $view ?>">Today</a>
     <h2 class="cal-title"><?= e($title) ?></h2>
   </div>
+  <?php if ($view !== 'list'): ?>
+    <span class="seg" id="cal-size">
+      <button type="button" data-size="sm">Compact</button>
+      <button type="button" data-size="lg">Large</button>
+    </span>
+  <?php endif; ?>
+
   <span class="seg">
     <a class="<?= $view === 'month' ? 'on' : '' ?>" href="?view=month&amp;m=<?= e($anchor->format('Y-m')) ?>">Month</a>
     <a class="<?= $view === 'week'  ? 'on' : '' ?>" href="?view=week">Week</a>

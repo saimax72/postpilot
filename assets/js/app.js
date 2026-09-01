@@ -915,6 +915,39 @@
     tickCountdowns();
     setInterval(tickCountdowns, 30000);
 
+    /*
+     * Calendar density. Compact fits a month on one screen; large shows the
+     * picture big enough to judge, which is the point of a visual calendar.
+     * Kept in localStorage rather than the URL so it survives navigation and
+     * does not need a round trip.
+     */
+    (function () {
+      var picker = $('#cal-size');
+      var grid   = $('.cal') || $('.week-grid');
+      if (!grid) return;
+
+      function apply(size) {
+        grid.classList.toggle('cal-large', size === 'lg');
+        if (picker) {
+          $$('button', picker).forEach(function (b) {
+            b.classList.toggle('on', b.dataset.size === size);
+          });
+        }
+      }
+
+      var saved = 'sm';
+      try { saved = localStorage.getItem('pp-cal-size') || 'sm'; } catch (e) {}
+      apply(saved);
+
+      if (!picker) return;
+      $$('button', picker).forEach(function (b) {
+        b.addEventListener('click', function () {
+          apply(b.dataset.size);
+          try { localStorage.setItem('pp-cal-size', b.dataset.size); } catch (e) {}
+        });
+      });
+    })();
+
     var form = $('#composer-form');
     if (!form) return;
 

@@ -1429,3 +1429,54 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (max-width: 900px) {
   .is-sent .composer { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Calendar: large (visual) density
+
+   The compact chip is a row - thumbnail then text. Large turns it into a card:
+   time and channel on top, picture below at full cell width, which is what
+   makes a month of images readable at a glance.
+   ========================================================================== */
+
+.cal-large .cal-cell { min-height: 232px; gap: 7px; }
+
+.cal-large .ev {
+  flex-direction: column; align-items: stretch; gap: 0;
+  padding: 0; border-left: 0; overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.cal-large .ev:hover { box-shadow: var(--shadow); }
+
+/* A coloured hairline along the top keeps the status legible without the
+   left border the compact chip uses. */
+.cal-large .ev::before {
+  content: ""; display: block; height: 3px; background: var(--brand);
+}
+.cal-large .ev.st-published::before  { background: var(--green); }
+.cal-large .ev.st-draft::before      { background: var(--faint); }
+.cal-large .ev.st-failed::before     { background: var(--red); }
+.cal-large .ev.st-publishing::before { background: var(--yellow); }
+
+.cal-large .ev-main { order: 1; padding: 7px 9px 6px; min-width: 0; }
+.cal-large .ev-time { font-size: .75rem; }
+.cal-large .ev-text { display: none; }
+.cal-large .ev-icons { margin-top: 5px; }
+
+.cal-large .ev-thumb {
+  order: 2; width: 100%; height: auto;
+  aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: 0;
+}
+.cal-large .ev-thumb-empty { aspect-ratio: 4 / 3; height: auto; }
+
+/* Week columns are wider, so the picture can breathe. */
+.week-grid.cal-large .ev-thumb { aspect-ratio: 1; }
+
+@media (max-width: 780px) {
+  .cal-large .cal-cell { min-height: 150px; }
+  .cal-large .ev-thumb { aspect-ratio: 1; }
+  .cal-large .ev-icons { display: flex; }
+}
