@@ -56,6 +56,39 @@ function brand_logo(): string
          . '</span>';
 }
 
+/**
+ * A decorative banner across the top of a page.
+ *
+ * The source images are between 869 and 1756 pixels wide, so each one is capped
+ * near its own natural width. Letting an 869px illustration stretch across a
+ * 1400px monitor would make it visibly soft, which looks worse than a banner
+ * that simply stops short of the edge.
+ *
+ * Marked aria-hidden: these carry no information a caption or heading does not
+ * already give, so a screen reader announcing them would only be noise.
+ */
+function page_banner(string $name): string
+{
+    // name => [intrinsic width, intrinsic height]
+    $sizes = [
+        'banner-01-calendar-platforms' => [1756, 308],
+        'banner-02-calendar-mobile'    => [869, 251],
+        'banner-03-workflow-icons'     => [869, 251],
+        'banner-04-global-analytics'   => [869, 281],
+        'banner-05-calendar-desk'      => [869, 281],
+    ];
+    if (!isset($sizes[$name])) {
+        return '';
+    }
+    [$w, $h] = $sizes[$name];
+    $cap = (int)round($w * 1.15);   // a little upscaling is fine; a lot is not
+
+    return '<figure class="page-banner" aria-hidden="true" style="max-width:' . $cap . 'px">'
+         . '<img src="' . asset('/assets/img/banners/' . $name . '.webp') . '" alt=""'
+         . ' width="' . $w . '" height="' . $h . '" decoding="async">'
+         . '</figure>';
+}
+
 function nav_link(string $href, string $iconName, string $label, string $current, ?int $count = null): string
 {
     $active = basename(parse_url($href, PHP_URL_PATH)) === $current ? ' active' : '';

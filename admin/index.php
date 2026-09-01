@@ -61,6 +61,8 @@ $actions = '<form method="post" style="margin:0">' . csrf_field()
          . '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('back', 15) . ' Back to app</a>';
 
 layout_head('Admin', 'Admin overview', $actions);
+
+echo page_banner('banner-04-global-analytics');
 ?>
 
 <div class="stats">

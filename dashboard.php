@@ -57,6 +57,8 @@ $actions = '<a class="btn btn-ghost btn-sm" href="/bulk.php">' . icon('zap', 15)
          . '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>';
 
 layout_head('Calendar', 'Calendar', $actions);
+
+echo page_banner('banner-01-calendar-platforms');
 ?>
 
 <?php if (!$accounts): ?>

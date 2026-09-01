@@ -1771,3 +1771,46 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .hook-url code {
   font-size: .8125rem; white-space: nowrap; color: var(--ink);
 }
+
+/* ---------- Decorative page banners ---------- */
+
+/* The artwork sits on a near-white ground of its own, so rather than boxing it
+   in a card it is masked away at the edges and left to dissolve into the page.
+   The bottom fade is the strongest because that is where the content begins. */
+.page-banner {
+  margin: 0 0 26px;
+  border-radius: 16px;
+  overflow: hidden;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%);
+  mask-image:
+    linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%);
+  -webkit-mask-composite: source-in;   /* Safari's older keyword set */
+          mask-composite: intersect;
+}
+.page-banner img { display: block; width: 100%; height: auto; }
+
+/* The illustrations are drawn on white. Left alone in the dark theme they read
+   as a slab of light, so they are dimmed and faded harder to sit down into the
+   page rather than float above it. */
+[data-theme="dark"] .page-banner {
+  opacity: .82;
+  filter: brightness(.86) contrast(1.04);
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0%, #000 38%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  mask-image:
+    linear-gradient(to bottom, #000 0%, #000 38%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%);
+}
+
+/* Below tablet width the banner is more height than it is worth. */
+@media (max-width: 700px) {
+  .page-banner { display: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-banner img { transition: opacity .3s ease; }
+}

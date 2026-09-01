@@ -43,6 +43,8 @@ $upcoming = array_reverse($posts);
 
 layout_head('Grid preview', 'Grid preview',
     '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>');
+
+echo page_banner('banner-02-calendar-mobile');
 ?>
 
 <?php if (!$visual): ?>

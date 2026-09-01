@@ -57,6 +57,8 @@ $actions = '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('cale
          . '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>';
 
 layout_head('Queue', 'Queue', $actions);
+
+echo page_banner('banner-03-workflow-icons');
 ?>
 
 <?php if ($next): ?>
