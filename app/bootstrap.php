@@ -66,6 +66,7 @@ require_once __DIR__ . '/templates.php';
 require_once __DIR__ . '/posts.php';
 require_once __DIR__ . '/publisher.php';
 require_once __DIR__ . '/instagram.php';
+require_once __DIR__ . '/oauth.php';   // needs http_get() and graph_error() from publisher.php
 
 if (session_status() === PHP_SESSION_NONE) {
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

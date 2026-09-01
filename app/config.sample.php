@@ -25,6 +25,17 @@ define('APP_KEY', 'GENERATE_A_LONG_RANDOM_STRING');
 // Secret required by cron/publish.php when triggered over HTTP.
 define('CRON_SECRET', 'GENERATE_ANOTHER_RANDOM_STRING');
 
+// ---------- One-click connecting (optional) ----------
+// Create ONE Meta app for this whole installation at developers.facebook.com,
+// add https://your-domain/oauth.php as a valid OAuth redirect URI, and paste
+// its credentials here. Users then press "Connect with Facebook" and never see
+// a token. Leave these blank to keep the paste-a-token flow instead.
+//
+// Your own Pages work immediately while the app is in Development mode.
+// Other people's accounts need Meta App Review first.
+define('META_APP_ID',     '');
+define('META_APP_SECRET', '');
+
 // Allow visitors to create their own account.
 define('ALLOW_REGISTRATION', true);
 

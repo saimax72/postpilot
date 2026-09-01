@@ -123,9 +123,41 @@ layout_head('Connecting accounts', 'Connecting your accounts',
 
 <div class="stack" style="gap:24px">
 
+  <!-- ---------------- The easy path ---------------- -->
+  <?php if (oauth_meta_ready()): ?>
+    <div class="card" style="border-color:var(--brand)">
+      <div class="card-head">
+        <h3>Facebook and Instagram: one click</h3>
+        <span class="badge badge-published">no token needed</span>
+      </div>
+      <div class="card-pad">
+        <p class="muted" style="margin-top:0">
+          Everything below is the manual route. For Facebook and Instagram you do not need it —
+          approve PostPilot on Facebook once and your Pages, plus any Instagram accounts linked
+          to them, connect themselves.
+        </p>
+        <a class="btn btn-lg" href="/oauth.php?go=meta" style="background:#1877F2">
+          <?= platform_icon('facebook', 16) ?> Connect with Facebook
+        </a>
+        <p class="small muted" style="margin:16px 0 0">
+          Still read the <a href="#net-instagram">Instagram</a> section for its posting limits —
+          the 25-a-day cap and the aspect ratio rules apply however you connect.
+        </p>
+      </div>
+    </div>
+  <?php elseif (is_admin_user()): ?>
+    <div class="alert alert-info" style="align-items:flex-start">
+      <?= icon('zap', 16) ?>
+      <span><strong>You can make this much easier for your users.</strong>
+      Create one Meta app for this whole installation and everyone gets a
+      &ldquo;Connect with Facebook&rdquo; button instead of the steps below.
+      See <a href="#owner">Setting up one-click connecting</a> at the bottom of this page.</span>
+    </div>
+  <?php endif; ?>
+
   <!-- ---------------- How it works ---------------- -->
   <div class="card">
-    <div class="card-head"><h3>How connecting works</h3></div>
+    <div class="card-head"><h3>How connecting works<?= oauth_meta_ready() ? ' by hand' : '' ?></h3></div>
     <div class="card-pad">
       <p class="muted" style="margin-top:0">
         PostPilot does not have a &ldquo;Log in with Facebook&rdquo; button. Each network makes you
@@ -485,6 +517,51 @@ layout_head('Connecting accounts', 'Connecting your accounts',
       </dl>
     </div>
   </div>
+
+  <?php if (is_admin_user()): ?>
+  <div class="card" id="owner">
+    <div class="card-head">
+      <h3>Setting up one-click connecting</h3>
+      <span class="badge badge-admin">administrators</span>
+    </div>
+    <div class="card-pad">
+      <p class="muted" style="margin-top:0">
+        This is done <strong>once, by you</strong>, for the whole installation — not by each user.
+        After it, everyone gets a &ldquo;Connect with Facebook&rdquo; button and never sees a token.
+        <?= oauth_meta_ready() ? '<strong>It is already configured here.</strong>' : '' ?>
+      </p>
+      <ol class="guide-steps">
+        <?= guide_step(1, 'Create one Meta app',
+            'At <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a>,
+             create a <strong>Business</strong> app. This one app serves every user of this
+             installation.') ?>
+        <?= guide_step(2, 'Add Facebook Login',
+            'Add the <strong>Facebook Login for Business</strong> product, then under
+             <em>Settings &rarr; Valid OAuth Redirect URIs</em> add exactly:
+             <code>' . e(oauth_redirect_uri()) . '</code>') ?>
+        <?= guide_step(3, 'Put the credentials in config',
+            'Copy the App ID and App Secret from <em>Settings &rarr; Basic</em> into
+             <code>app/config.php</code>:<br>
+             <code>define(&#39;META_APP_ID&#39;, &#39;…&#39;);</code><br>
+             <code>define(&#39;META_APP_SECRET&#39;, &#39;…&#39;);</code><br>
+             The button appears as soon as both are set.') ?>
+        <?= guide_step(4, 'Test with your own accounts',
+            'While the app is in <em>Development</em> mode it works for Pages you administer,
+             with no review. That is enough to confirm the whole flow.') ?>
+        <?= guide_step(5, 'Submit for App Review — before other people use it',
+            'To let <em>anyone else</em> connect their accounts, Meta must approve
+             <code>pages_manage_posts</code> and <code>instagram_content_publish</code>. You will
+             need a privacy policy URL and a screen recording of the flow. Expect days, sometimes
+             weeks.') ?>
+      </ol>
+      <div class="alert alert-warn" style="margin-bottom:0;align-items:flex-start">
+        <?= icon('alert', 16) ?>
+        <span>The App Secret is a password for your whole installation. It belongs in
+        <code>app/config.php</code>, which is never committed to git — not in any file that is.</span>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <div class="card card-pad center">
     <h3 style="margin-top:0">Ready to connect one?</h3>

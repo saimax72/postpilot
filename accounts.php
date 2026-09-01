@@ -65,6 +65,25 @@ layout_head('Accounts', 'Connected accounts',
     . icon('plus', 16) . ' Connect account</button>');
 ?>
 
+<!-- ---------------- One-click connect ---------------- -->
+<?php if (oauth_meta_ready()): ?>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-head"><h3>The easy way</h3></div>
+    <div class="card-pad">
+      <p class="muted" style="margin-top:0">
+        Approve PostPilot on Facebook once and your Pages &mdash; plus any Instagram accounts
+        linked to them &mdash; connect themselves. No developer app, no tokens, nothing to copy.
+      </p>
+      <div class="row">
+        <a class="btn btn-lg" href="/oauth.php?go=meta" style="background:#1877F2">
+          <?= platform_icon('facebook', 16) ?> Connect with Facebook
+        </a>
+        <span class="small muted">Connects Facebook &amp; Instagram together</span>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <!-- ---------------- Connect form ---------------- -->
 <div class="card hide" id="connect" style="margin-bottom:24px">
   <div class="card-head"><h3>Connect an account</h3></div>
@@ -146,6 +165,14 @@ layout_head('Accounts', 'Connected accounts',
     </div>
     <h3>No channels yet</h3>
     <p class="muted">Connect the profiles and pages you post from. You can add as many as you like.</p>
+    <?php if (oauth_meta_ready()): ?>
+      <div class="row" style="justify-content:center;margin-bottom:14px">
+        <a class="btn btn-lg" href="/oauth.php?go=meta" style="background:#1877F2">
+          <?= platform_icon('facebook', 16) ?> Connect with Facebook
+        </a>
+      </div>
+      <p class="small muted" style="margin:0 0 14px">or add one by hand</p>
+    <?php endif; ?>
     <div class="row" style="justify-content:center">
       <button class="btn" onclick="document.getElementById('connect').classList.remove('hide')">
         <?= icon('plus', 16) ?> Connect your first account

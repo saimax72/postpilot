@@ -1721,3 +1721,15 @@ table.data tbody tr:hover { background: var(--line-soft); }
   text-transform: uppercase;
   background: rgba(148, 163, 184, .24); color: var(--muted);
 }
+
+/* ---------- OAuth account picker ---------- */
+
+.pick-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--r);
+  border: 1px solid var(--line); background: var(--card);
+  cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+.pick-row:hover { border-color: var(--faint); }
+.pick-row:has(input:checked) { border-color: var(--brand); background: var(--brand-50); }
+.pick-row input { width: 17px; height: 17px; flex: none; accent-color: var(--brand); }
