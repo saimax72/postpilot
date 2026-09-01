@@ -1744,3 +1744,11 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .nav-plan.is-over .nav-plan-tag {
   background: rgba(220, 38, 38, .14); color: #b91c1c;
 }
+
+/* The pricing cards now also render inside the app, which has a dark theme the
+   marketing page does not. The featured card's tint has to follow it. */
+[data-theme="dark"] .price-card.is-featured {
+  background: linear-gradient(168deg, rgba(124, 108, 246, .14), var(--card) 55%);
+  border-color: rgba(124, 108, 246, .45);
+  box-shadow: none;
+}
