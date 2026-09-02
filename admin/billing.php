@@ -127,6 +127,7 @@ layout_head('Payments', 'Payments and pricing');
       <div class="stats" style="margin:0 0 18px">
         <div class="stat"><div class="k">Pro price</div><div class="v"><?= e(billing_price_label()) ?></div></div>
         <div class="stat s-green"><div class="k">Paying users</div><div class="v"><?= billing_pro_count() ?></div></div>
+        <div class="stat s-yellow"><div class="k">Complimentary</div><div class="v"><?= billing_comp_count() ?></div></div>
         <div class="stat s-pink"><div class="k">Provider</div><div class="v" style="font-size:1.125rem"><?= $provider ? e(ucfirst($provider)) : '—' ?></div></div>
       </div>
 

@@ -14,6 +14,22 @@ if (!$u) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    $do = $_POST['do'] ?? '';
+
+    if ($do === 'comp') {
+        billing_comp_pro($id, (int)$me['id'], trim((string)($_POST['note'] ?? '')));
+        flash('success', $u['name'] . ' now has Pro access, with no payment and no daily limit.');
+        redirect('/admin/user.php?id=' . $id);
+    }
+    if ($do === 'uncomp') {
+        billing_uncomp($id, (int)$me['id']);
+        flash('success', 'Complimentary Pro removed. Their posts and channels are untouched.');
+        redirect('/admin/user.php?id=' . $id);
+    }
+}
+
 $isSelf   = $id === (int)$me['id'];
 $stats    = post_stats($id);
 $accounts = accounts_for_user($id);
@@ -48,6 +64,71 @@ layout_head($u['name'], $u['name'],
       Joined <?= e(date('j M Y', strtotime($u['created_at']))) ?><br>
       Last seen <?= $u['last_login_at'] ? e(time_ago($u['last_login_at'])) : 'never' ?>
     </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:22px">
+  <div class="card-head">
+    <h3>Plan</h3>
+    <?php if (billing_is_comped($u)): ?>
+      <span class="badge badge-admin">complimentary Pro</span>
+    <?php elseif (plan_key($u) === 'pro'): ?>
+      <span class="badge badge-published">paying &middot; <?= e(ucfirst((string)$u['billing_provider'])) ?></span>
+    <?php else: ?>
+      <span class="badge badge-scheduled"><?= e(plan($u)['label']) ?></span>
+    <?php endif; ?>
+  </div>
+  <div class="card-pad">
+    <?php
+    $limit = plan_limit('posts_per_day', $u);
+    $used  = usage_posts_today($id, $u);
+    $left  = trial_days_left($u);
+    ?>
+    <p class="muted" style="margin-top:0">
+      <?php if (plan_key($u) === 'pro'): ?>
+        Unlimited posts, no daily cap.
+        <?php if ($u['plan_since']): ?>
+          On Pro since <?= e(date('j M Y', strtotime($u['plan_since'] . ' UTC'))) ?>.
+        <?php endif; ?>
+      <?php else: ?>
+        <?= $limit ? $limit . ' posts a day' : 'Unlimited posts' ?>,
+        <?= (int)$used ?> used today<?php if ($left !== null): ?>,
+        <?= trial_expired($u) ? 'trial ended' : $left . ' day' . ($left === 1 ? '' : 's') . ' of trial left' ?><?php endif; ?>.
+      <?php endif; ?>
+    </p>
+
+    <?php if (billing_is_comped($u)): ?>
+      <form method="post" onsubmit="return confirm('Remove complimentary Pro from <?= e($u['name']) ?>?')">
+        <?= csrf_field() ?>
+        <input type="hidden" name="do" value="uncomp">
+        <p class="small muted">
+          Granted by hand, so nothing is billed and nothing needs cancelling. Removing it puts them
+          back on the trial tier &mdash; their posts, channels and templates are untouched.
+        </p>
+        <button class="btn btn-ghost" type="submit">Remove complimentary Pro</button>
+      </form>
+
+    <?php elseif (plan_key($u) === 'pro'): ?>
+      <div class="alert alert-info" style="margin-bottom:0;align-items:flex-start">
+        <?= icon('zap', 16) ?>
+        <span>This account is paying through <?= e(ucfirst((string)$u['billing_provider'])) ?>.
+        Cancel the subscription there rather than changing the plan here, or they will keep
+        being charged for a plan they no longer have.</span>
+      </div>
+
+    <?php else: ?>
+      <form method="post">
+        <?= csrf_field() ?>
+        <input type="hidden" name="do" value="comp">
+        <label class="field" style="max-width:420px">
+          <span>Give Pro access, free</span>
+          <input type="text" name="note" maxlength="120"
+                 placeholder="Why — e.g. beta tester, friend of the business">
+          <span class="hint">Recorded in the billing log so you can tell later why they have it.</span>
+        </label>
+        <button class="btn" type="submit"><?= icon('sparkle', 16) ?> Grant complimentary Pro</button>
+      </form>
+    <?php endif; ?>
   </div>
 </div>
 

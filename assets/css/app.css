@@ -1865,3 +1865,38 @@ table.data tbody tr:hover { background: var(--line-soft); }
     margin-top: 0;
   }
 }
+
+/* ---------- Plan limit notice ---------- */
+
+/* Hitting a plan limit is not a failure, so it does not get the red error
+   treatment. It states what happened, what still worked, and the way out. */
+.limit-wrap { margin: 0 0 18px; }
+
+.limit-note {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(140deg, var(--brand-50), var(--card) 70%);
+  border: 1px solid rgba(124, 108, 246, .35);
+  box-shadow: 0 8px 26px rgba(60, 50, 130, .09);
+}
+
+.limit-icon {
+  flex: none; width: 38px; height: 38px; border-radius: 11px;
+  display: grid; place-items: center;
+  background: var(--brand); color: #fff;
+  font-size: 1.125rem; line-height: 1;
+}
+
+.limit-body { min-width: 0; }
+.limit-body h4 {
+  margin: 2px 0 6px;
+  font-size: 1.0625rem; font-weight: 700; letter-spacing: -.015em;
+  color: var(--ink);
+}
+.limit-body p {
+  margin: 0 0 10px; font-size: .875rem; line-height: 1.55;
+  color: var(--ink-2); max-width: 62ch;
+}
+.limit-tally { color: var(--muted) !important; }
+.limit-body .btn { margin-top: 4px; }

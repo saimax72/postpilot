@@ -247,7 +247,50 @@
     fail: function (msg) {
       var el = $('#bulk-error');
       el.textContent = msg;
-      el.classList.remove('hide');
+      el.className = 'alert alert-error';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    },
+
+    /**
+     * Hitting the plan limit is not an error, it is a sales moment.
+     *
+     * The generic failure path repeats one sentence per file, which is how a
+     * limit of ten turned into four identical paragraphs of red text. This says
+     * it once, leads with what did work, and offers the way out.
+     */
+    limitReached: function (info) {
+      var el = $('#bulk-error');
+      var done = info.done || 0, left = info.skipped || 0;
+
+      var parts = [];
+      parts.push('<div class="limit-note">');
+      parts.push('<div class="limit-icon">✦</div>');
+      parts.push('<div class="limit-body">');
+
+      if (info.reason === 'trial_ended') {
+        parts.push('<h4>Your free trial has ended</h4>');
+        parts.push('<p>Everything you have made is still here, and posts already scheduled ' +
+                   'keep publishing. Only creating new ones is paused.</p>');
+      } else {
+        parts.push('<h4>That is today&rsquo;s ' + (info.limit || 10) + ' posts</h4>');
+        parts.push('<p>Your free trial includes ' + (info.limit || 10) +
+                   ' posts a day. The limit resets at midnight in your timezone, ' +
+                   'or Pro removes it entirely.</p>');
+      }
+
+      if (done || left) {
+        parts.push('<p class="limit-tally">');
+        if (done)  parts.push('<strong>' + done + '</strong> scheduled just now. ');
+        if (left)  parts.push('<strong>' + left + '</strong> still waiting &mdash; ' +
+                              'they are kept, so you can finish them any time.');
+        parts.push('</p>');
+      }
+
+      parts.push('<a class="btn btn-sm" href="/pricing.php">Upgrade to Pro</a>');
+      parts.push('</div></div>');
+
+      el.innerHTML = parts.join('');
+      el.className = 'limit-wrap';
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
 
@@ -321,6 +364,16 @@
 
         if (!data.ok) { Bulk.fail(data.error || 'Could not create the batch.'); return; }
 
+        if (data.blocked) {
+          Bulk.limitReached({
+            reason:  data.blocked,
+            limit:   data.limit,
+            done:    data.created,
+            skipped: data.skipped
+          });
+          return;
+        }
+
         if (data.failed && data.failed.length) {
           Bulk.fail(data.created + ' created, ' + data.failed.length + ' skipped: ' +
             data.failed.slice(0, 3).map(function (f) { return f.name + ' (' + f.error + ')'; }).join('; ')
@@ -371,6 +424,7 @@
       var total   = queue.length;
       var done    = 0, okCount = 0;
       var failures = [];
+      this.blocked = null;
 
       var btn = $('#b-now');
       btn.disabled = true;
@@ -384,7 +438,14 @@
           $('#b-go').disabled = false;
           $('#b-progress').classList.add('hide');
 
-          if (failures.length) {
+          if (self.blocked) {
+            self.limitReached({
+              reason:  self.blocked.reason,
+              limit:   self.blocked.limit,
+              done:    okCount,
+              skipped: queue.length + failures.length
+            });
+          } else if (failures.length) {
             self.fail(okCount + ' published, ' + failures.length + ' failed: ' +
               failures.slice(0, 3).map(function (f) { return f.name + ' (' + f.error + ')'; }).join('; ') +
               (failures.length > 3 ? '…' : ''));
@@ -419,6 +480,12 @@
           if (data.ok && data.published) {
             okCount++;
             self.mark(idx, 'ok', 'published');
+          } else if (data.blocked) {
+            // Every remaining post would fail identically, so stop here and
+            // leave the rest of the queue intact for after an upgrade.
+            self.blocked = { reason: data.blocked, limit: data.limit };
+            self.mark(idx, 'bad', 'daily limit');
+            queue.length = 0;
           } else {
             var why = data.error || 'refused';
             failures.push({ name: it.name, error: why });

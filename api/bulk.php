@@ -94,8 +94,10 @@ if ($action === 'create') {
         json_fail('That is more than ' . BULK_MAX_ITEMS . ' posts in one batch. Split it up.');
     }
 
-    $created = [];
-    $failed  = [];
+    $created   = [];
+    $failed    = [];
+    $stoppedBy = null;
+    $skipped   = 0;
 
     foreach ($items as $i => $item) {
         $path    = trim((string)($item['path'] ?? ''));
@@ -157,9 +159,19 @@ if ($action === 'create') {
 
         if ($ok) {
             $created[] = ['id' => $result, 'date' => $date, 'time' => $time];
-        } else {
-            $failed[] = ['name' => $label, 'error' => $result];
+            continue;
         }
+
+        // Once the plan limit is what is stopping us, every remaining file will
+        // fail for the same reason. Stop and report it once rather than
+        // producing one identical error per image.
+        if ($blocked = post_block_code($uid, $user)) {
+            $stoppedBy = $blocked;
+            $skipped   = count($items) - count($created) - count($failed);
+            break;
+        }
+
+        $failed[] = ['name' => $label, 'error' => $result];
     }
 
     if ($tplId && $created) {
@@ -169,10 +181,14 @@ if ($action === 'create') {
     log_activity($uid, 'bulk_create', count($created) . ' posts created, ' . count($failed) . ' failed');
 
     json_out([
-        'ok'      => true,
-        'created' => count($created),
-        'failed'  => $failed,
-        'posts'   => $created,
+        'ok'        => true,
+        'created'   => count($created),
+        'failed'    => $failed,
+        'blocked'   => $stoppedBy,
+        'skipped'   => $skipped,
+        'remaining' => posts_remaining_today($uid, $user),
+        'limit'     => plan_limit('posts_per_day', $user),
+        'posts'     => $created,
     ]);
 }
 
@@ -232,7 +248,17 @@ if ($action === 'publish_one') {
     );
 
     if (!$ok) {
-        json_out(['ok' => false, 'name' => $label, 'error' => $result]);
+        // Tell the client *why* in a form it can act on. Publishing a batch
+        // runs one request per image, so without this the same sentence comes
+        // back twenty times and gets concatenated into a wall of red text.
+        json_out([
+            'ok'        => false,
+            'name'      => $label,
+            'error'     => $result,
+            'blocked'   => post_block_code($uid, $user),
+            'remaining' => posts_remaining_today($uid, $user),
+            'limit'     => plan_limit('posts_per_day', $user),
+        ]);
     }
 
     // Claim it the way the worker does, so a cron run cannot double-post.

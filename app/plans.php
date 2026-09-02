@@ -209,6 +209,44 @@ function post_block_reason(int $userId, ?array $user = null): ?string
     );
 }
 
+/**
+ * Why a user is blocked, as a code rather than prose.
+ *
+ * post_block_reason() gives a sentence, which is right for a single save but
+ * turns into a wall of repeated text when twenty uploads each fail for the same
+ * reason. Callers handling a batch use this to say it once.
+ *
+ * Returns null, 'daily_limit' or 'trial_ended'.
+ */
+function post_block_code(int $userId, ?array $user = null): ?string
+{
+    $user = $user ?: auth_user();
+
+    if (is_admin_user($user)) {
+        return null;
+    }
+    if (trial_expired($user)) {
+        return 'trial_ended';
+    }
+
+    $limit = plan_limit('posts_per_day', $user);
+    if ($limit === 0 || usage_posts_today($userId, $user) < $limit) {
+        return null;
+    }
+    return 'daily_limit';
+}
+
+/** How many more posts this user may create today. Null when unlimited. */
+function posts_remaining_today(int $userId, ?array $user = null): ?int
+{
+    $user  = $user ?: auth_user();
+    $limit = plan_limit('posts_per_day', $user);
+    if ($limit === 0) {
+        return null;
+    }
+    return max(0, $limit - usage_posts_today($userId, $user));
+}
+
 /** Usage lines for the settings page. */
 function plan_usage_rows(int $userId, ?array $user = null): array
 {

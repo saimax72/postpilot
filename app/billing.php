@@ -349,6 +349,63 @@ function billing_record_event(?int $userId, string $provider, array $meta): bool
     }
 }
 
+/**
+ * Give a user Pro without payment, or take it back.
+ *
+ * Recorded with provider 'comp' rather than stripe/paypal so a complimentary
+ * account is never counted as revenue, and so anyone reading the billing log
+ * later can see it was granted by hand and by whom.
+ */
+function billing_comp_pro(int $userId, int $adminId, string $note = ''): void
+{
+    db_run(
+        "UPDATE users
+            SET plan = 'pro', plan_since = UTC_TIMESTAMP(),
+                billing_provider = 'comp', billing_sub_id = NULL
+          WHERE id = ?",
+        [$userId]
+    );
+    billing_record_event($userId, 'comp', [
+        'type'     => 'comp.granted',
+        'event_id' => 'comp-' . $userId . '-' . gmdate('YmdHis'),
+        'detail'   => 'Granted by admin #' . $adminId . ($note !== '' ? ': ' . $note : ''),
+    ]);
+    log_activity($userId, 'plan_comp', 'Pro access granted by an administrator'
+        . ($note !== '' ? ' - ' . $note : ''));
+}
+
+/** Put a comped user back on the trial tier. */
+function billing_uncomp(int $userId, int $adminId): void
+{
+    db_run(
+        "UPDATE users SET plan = 'trial', billing_provider = NULL WHERE id = ?",
+        [$userId]
+    );
+    billing_record_event($userId, 'comp', [
+        'type'     => 'comp.revoked',
+        'event_id' => 'uncomp-' . $userId . '-' . gmdate('YmdHis'),
+        'detail'   => 'Revoked by admin #' . $adminId,
+    ]);
+    log_activity($userId, 'plan_uncomp', 'Complimentary Pro access removed');
+}
+
+/** True when this user has Pro without paying for it. */
+function billing_is_comped(array $user): bool
+{
+    return ($user['plan'] ?? '') === 'pro' && ($user['billing_provider'] ?? '') === 'comp';
+}
+
+/** How many people are on complimentary Pro. */
+function billing_comp_count(): int
+{
+    try {
+        return (int)db_value(
+            "SELECT COUNT(*) FROM users WHERE plan = 'pro' AND billing_provider = 'comp'");
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
 /** Recent billing activity for the admin page. */
 function billing_recent_events(int $limit = 20): array
 {
@@ -369,7 +426,10 @@ function billing_recent_events(int $limit = 20): array
 function billing_pro_count(): int
 {
     try {
-        return (int)db_value("SELECT COUNT(*) FROM users WHERE plan = 'pro'");
+        // Comped accounts are Pro but not revenue, so they are counted apart.
+        return (int)db_value(
+            "SELECT COUNT(*) FROM users
+              WHERE plan = 'pro' AND (billing_provider IS NULL OR billing_provider <> 'comp')");
     } catch (Throwable $e) {
         return 0;
     }
