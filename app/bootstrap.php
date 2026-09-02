@@ -62,6 +62,7 @@ require_once __DIR__ . '/settings_store.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/plans.php';
 require_once __DIR__ . '/media.php';
+require_once __DIR__ . '/duplicates.php';
 require_once __DIR__ . '/hashtags.php';
 require_once __DIR__ . '/templates.php';
 require_once __DIR__ . '/posts.php';

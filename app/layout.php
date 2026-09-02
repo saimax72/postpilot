@@ -137,6 +137,7 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
     <div class="nav-label">Workspace</div>
     <?= nav_link('/templates.php', 'grid',    'Templates',    $current) ?>
     <?= nav_link('/hashtags.php', 'list',     'Hashtag sets', $current) ?>
+    <?= nav_link('/duplicates.php', 'image', 'Duplicates',  $current) ?>
     <?= nav_link('/settings.php',  'settings', 'Settings',  $current) ?>
 
     <?php if (is_admin()): ?>

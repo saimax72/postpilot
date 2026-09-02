@@ -179,3 +179,20 @@ function asset(string $path): string
     $v    = is_file($file) ? filemtime($file) : 1;
     return $rel . '?v=' . $v;
 }
+
+/** Bytes as something a person reads, e.g. "4.2 MB". */
+function human_size(int $bytes): string
+{
+    if ($bytes < 1024) {
+        return $bytes . ' B';
+    }
+    $units = ['KB', 'MB', 'GB'];
+    $n = $bytes / 1024;
+    foreach ($units as $i => $unit) {
+        if ($n < 1024 || $i === count($units) - 1) {
+            return ($n < 10 ? round($n, 1) : round($n)) . ' ' . $unit;
+        }
+        $n /= 1024;
+    }
+    return $bytes . ' B';
+}

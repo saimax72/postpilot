@@ -1942,3 +1942,28 @@ table.data tbody tr:hover { background: var(--line-soft); }
 @media (prefers-reduced-motion: reduce) {
   .bulk-item.is-going { animation: none; opacity: 0; }
 }
+
+/* ---------- Duplicate image sets ---------- */
+
+.dup-row {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+  gap: 16px;
+}
+
+.dup-thumb {
+  position: relative; aspect-ratio: 1;
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--line); background: var(--line-soft);
+}
+.dup-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The first copy is the one that survives "delete all unused", so it is marked
+   rather than left for the reader to work out from position alone. */
+.dup-copy.is-keep .dup-thumb { border-color: var(--brand); }
+.dup-tag {
+  position: absolute; top: 7px; left: 7px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: .625rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase;
+  background: var(--brand); color: #fff;
+}
