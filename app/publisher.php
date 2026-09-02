@@ -282,7 +282,21 @@ function drive_instagram(array $post, array $target, string $token): array
                 'access_token' => $token,
             ]);
         }
-        return ['ok' => true, 'id' => $publish['id'], 'url' => null];
+        // Ask for the permalink while we still have the token to hand. Without
+        // it a published post is just an opaque numeric id, and the only way to
+        // answer "did this actually go out?" is to scroll the account by eye.
+        // Best-effort: the post is already live, so a failure here changes
+        // nothing except that the link is missing.
+        $link = http_get("{$host}/{$publish['id']}", [
+            'fields'       => 'permalink',
+            'access_token' => $token,
+        ]);
+
+        return [
+            'ok'  => true,
+            'id'  => $publish['id'],
+            'url' => $link['permalink'] ?? null,
+        ];
     }
     return ['ok' => false, 'error' => graph_error($publish)];
 }

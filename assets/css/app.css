@@ -1967,3 +1967,11 @@ table.data tbody tr:hover { background: var(--line-soft); }
   text-transform: uppercase;
   background: var(--brand); color: #fff;
 }
+
+/* Per-channel outcome inside a queue chip. Small, but it is the difference
+   between "the app says published" and "the network confirmed it". */
+.chip-ok   { color: #15803d; font-weight: 650; }
+.chip-warn { color: #a16207; font-weight: 650; }
+.chip-bad  { color: #b91c1c; font-weight: 650; cursor: help; }
+[data-theme="dark"] .chip-ok  { color: #4ade80; }
+[data-theme="dark"] .chip-bad { color: #f87171; }

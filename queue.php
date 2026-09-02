@@ -168,11 +168,29 @@ echo upgrade_nudge(false);
           <p class="lv-caption"><?= e(str_limit($p['content'] ?: 'Media post', 220)) ?></p>
 
           <div class="lv-meta">
-            <?php foreach ($p['targets'] as $t): ?>
+            <?php foreach ($p['targets'] as $t):
+              $remote = (string)($t['remote_post_id'] ?? '');
+              $isDemo = str_starts_with($remote, 'demo-');
+              $sentOk = $t['status'] === 'published' && $remote !== '' && !$isDemo;
+              ?>
               <span class="chip">
                 <span class="pdot pdot-sm" style="background:<?= e(platform_color($t['platform'])) ?>">
                   <?= platform_icon($t['platform'], 10) ?>
                 </span><?= e($t['display_name'] ?: platform_label($t['platform'])) ?>
+
+                <?php /* What the network actually said, so "published" is
+                         verifiable rather than something to take on trust. */ ?>
+                <?php if ($sentOk && $t['remote_url']): ?>
+                  &middot; <a href="<?= e($t['remote_url']) ?>" target="_blank" rel="noopener noreferrer"
+                              onclick="event.stopPropagation()"
+                              title="Open the live post">view</a>
+                <?php elseif ($sentOk): ?>
+                  <span class="chip-ok" title="Accepted by <?= e(platform_label($t['platform'])) ?>, id <?= e($remote) ?>">&check; sent</span>
+                <?php elseif ($isDemo): ?>
+                  <span class="chip-warn" title="Recorded as published, but this channel had no credentials so nothing was sent.">demo</span>
+                <?php elseif ($t['status'] === 'failed' && $t['error']): ?>
+                  <span class="chip-bad" title="<?= e($t['error']) ?>">failed</span>
+                <?php endif; ?>
               </span>
             <?php endforeach; ?>
 
