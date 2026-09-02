@@ -18,6 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $do = $_POST['do'] ?? '';
 
+    if (!billing_columns_ready()) {
+        flash('error', 'Run migrations/006_billing.sql first — the plan columns do not exist yet.');
+        redirect('/admin/user.php?id=' . $id);
+    }
     if ($do === 'comp') {
         billing_comp_pro($id, (int)$me['id'], trim((string)($_POST['note'] ?? '')));
         flash('success', $u['name'] . ' now has Pro access, with no payment and no daily limit.');
@@ -73,7 +77,7 @@ layout_head($u['name'], $u['name'],
     <?php if (billing_is_comped($u)): ?>
       <span class="badge badge-admin">complimentary Pro</span>
     <?php elseif (plan_key($u) === 'pro'): ?>
-      <span class="badge badge-published">paying &middot; <?= e(ucfirst((string)$u['billing_provider'])) ?></span>
+      <span class="badge badge-published">paying &middot; <?= e(ucfirst((string)($u['billing_provider'] ?? ''))) ?></span>
     <?php else: ?>
       <span class="badge badge-scheduled"><?= e(plan($u)['label']) ?></span>
     <?php endif; ?>
@@ -87,8 +91,8 @@ layout_head($u['name'], $u['name'],
     <p class="muted" style="margin-top:0">
       <?php if (plan_key($u) === 'pro'): ?>
         Unlimited posts, no daily cap.
-        <?php if ($u['plan_since']): ?>
-          On Pro since <?= e(date('j M Y', strtotime($u['plan_since'] . ' UTC'))) ?>.
+        <?php if ($u['plan_since'] ?? null): ?>
+          On Pro since <?= e(date('j M Y', strtotime(($u['plan_since'] ?? '') . ' UTC'))) ?>.
         <?php endif; ?>
       <?php else: ?>
         <?= $limit ? $limit . ' posts a day' : 'Unlimited posts' ?>,
@@ -111,9 +115,17 @@ layout_head($u['name'], $u['name'],
     <?php elseif (plan_key($u) === 'pro'): ?>
       <div class="alert alert-info" style="margin-bottom:0;align-items:flex-start">
         <?= icon('zap', 16) ?>
-        <span>This account is paying through <?= e(ucfirst((string)$u['billing_provider'])) ?>.
+        <span>This account is paying through <?= e(ucfirst((string)($u['billing_provider'] ?? ''))) ?>.
         Cancel the subscription there rather than changing the plan here, or they will keep
         being charged for a plan they no longer have.</span>
+      </div>
+
+    <?php elseif (!billing_columns_ready()): ?>
+      <div class="alert alert-warn" style="margin-bottom:0;align-items:flex-start">
+        <?= icon('alert', 16) ?>
+        <span><strong>One database change is needed first.</strong>
+        Run <code>migrations/006_billing.sql</code> in phpMyAdmin, then reload &mdash; the button
+        to grant Pro appears here. Nothing else is affected until you do.</span>
       </div>
 
     <?php else: ?>

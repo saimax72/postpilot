@@ -350,6 +350,27 @@ function billing_record_event(?int $userId, string $provider, array $meta): bool
 }
 
 /**
+ * Whether migration 006 has added the billing columns to users.
+ *
+ * Deploys land before migrations are run by hand, so every entry point that
+ * writes these columns has to cope with them not being there yet - and say so,
+ * rather than throwing a SQL error at an administrator who has done nothing
+ * wrong.
+ */
+function billing_columns_ready(): bool
+{
+    static $ready = null;
+    if ($ready === null) {
+        try {
+            $ready = (bool)db_one("SHOW COLUMNS FROM users LIKE 'billing_provider'");
+        } catch (Throwable $e) {
+            $ready = false;
+        }
+    }
+    return $ready;
+}
+
+/**
  * Give a user Pro without payment, or take it back.
  *
  * Recorded with provider 'comp' rather than stripe/paypal so a complimentary
