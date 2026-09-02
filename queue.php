@@ -216,10 +216,23 @@ echo upgrade_nudge(false);
                     title="Publish straight away instead of waiting for the scheduler"
                     onclick="event.stopPropagation(); Retry.now(<?= (int)$p['id'] ?>, this)">Publish now</button>
           <?php endif; ?>
-          <?php if ($p['status'] === 'failed'): ?>
+          <?php if ($p['status'] === 'failed'):
+            /* A post that was interrupted mid-publish may already be live: the
+               network accepted it and the failure came afterwards, while
+               recording the result. Republishing that posts it twice, which is
+               far harder to undo than a post that never went out - so this one
+               asks first, and the plain ones do not. */
+            $interrupted = str_contains((string)$p['last_error'], 'Interrupted while publishing');
+            ?>
+            <?php if ($interrupted): ?>
+              <span class="badge badge-publishing"
+                    title="The network may have accepted this before the failure. Check the account before republishing.">may be live</span>
+            <?php endif; ?>
             <button class="btn btn-ghost btn-sm" type="button"
-                    title="Put it back in the queue for the next scheduled run"
-                    onclick="event.stopPropagation(); Retry.one(<?= (int)$p['id'] ?>, this)">Requeue</button>
+                    title="<?= $interrupted
+                              ? 'This one may already have posted - check first'
+                              : 'Put it back in the queue for the next scheduled run' ?>"
+                    onclick="event.stopPropagation(); Retry.one(<?= (int)$p['id'] ?>, this, <?= $interrupted ? 'true' : 'false' ?>)">Requeue</button>
           <?php endif; ?>
           <?php if ($p['status'] === 'published' && post_was_demo($p)): ?>
             <span class="badge badge-draft" title="Recorded as published, but the account had no credentials at the time so nothing was sent.">demo only</span>
@@ -278,7 +291,11 @@ window.Retry = {
     });
   },
 
-  one: function (id, btn) {
+  one: function (id, btn, mayBeLive) {
+    if (mayBeLive && !confirm(
+        'This post was interrupted while publishing, so it may already be live on the network. ' +
+        'Check the account first — requeuing it will post it a second time. Requeue anyway?')) return;
+
     btn.disabled = true;
     btn.textContent = 'Queueing…';
     this.send({ id: id }, function (data) {
