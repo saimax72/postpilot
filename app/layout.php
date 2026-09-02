@@ -156,7 +156,26 @@ function layout_head(string $title, string $heading = '', string $actions = ''):
           <div class="tiny muted" style="overflow:hidden;text-overflow:ellipsis"><?= e($user['email'] ?? '') ?></div>
         </span>
       </div>
-      <?php if (($planDays = trial_days_left()) !== null): ?>
+      <?php
+      /* What plan this account is on. A paying or comped user gets a plain
+         statement rather than a link to buy something they already have. */
+      $planDays = trial_days_left();
+      ?>
+      <?php if (plan_key() === 'pro'): ?>
+        <div class="nav-item nav-plan is-pro" title="<?= billing_is_comped($user)
+              ? 'Full access, granted by an administrator'
+              : 'Pro subscription - no limits' ?>">
+          <?= icon('sparkle') ?><span>Pro plan</span>
+          <span class="nav-plan-tag">
+            <?= billing_is_comped($user) ? 'full access' : 'active' ?>
+          </span>
+        </div>
+      <?php elseif (is_admin_user()): ?>
+        <div class="nav-item nav-plan is-pro" title="Administrators are exempt from every plan limit">
+          <?= icon('shield') ?><span>Unlimited</span>
+          <span class="nav-plan-tag">admin</span>
+        </div>
+      <?php elseif ($planDays !== null): ?>
         <a class="nav-item nav-plan<?= trial_expired() ? ' is-over' : '' ?>" href="/pricing.php">
           <?= icon('sparkle') ?><span>See plans</span>
           <span class="nav-plan-tag">

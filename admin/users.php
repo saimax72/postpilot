@@ -46,6 +46,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Role updated to ' . $role . '.');
     }
 
+    // Full access: Pro, granted by hand, no payment involved.
+    if ($do === 'fullaccess' || $do === 'fullaccess_off') {
+        if (!billing_columns_ready()) {
+            flash('error', 'Run migrations/006_billing.sql first - the plan columns do not exist yet.');
+        } elseif ($do === 'fullaccess') {
+            billing_comp_pro($target, (int)$me['id'], 'Granted from the users list');
+            flash('success', 'Full access granted. No daily limit and no trial clock.');
+        } else {
+            billing_uncomp($target, (int)$me['id']);
+            flash('success', 'Full access removed. Their posts and channels are untouched.');
+        }
+    }
+
     if ($do === 'reset_password' && $target) {
         $new = (string)($_POST['password'] ?? '');
         if (strlen($new) < 8) {
@@ -161,13 +174,46 @@ layout_head('All users', 'All users',
               </form>
             <?php endif; ?>
           </td>
-          <td><span class="badge badge-<?= e($u['status']) ?>"><?= e($u['status']) ?></span></td>
+          <td>
+            <div class="row" style="gap:5px">
+              <span class="badge badge-<?= e($u['status']) ?>"><?= e($u['status']) ?></span>
+              <?php if (billing_is_comped($u)): ?>
+                <span class="badge badge-admin" title="Pro, granted by an administrator">full access</span>
+              <?php elseif (($u['plan'] ?? '') === 'pro'): ?>
+                <span class="badge badge-published" title="Paying subscriber">pro</span>
+              <?php endif; ?>
+            </div>
+          </td>
           <td><?= (int)$u['post_count'] ?></td>
           <td><?= (int)$u['account_count'] ?></td>
           <td class="tiny muted nowrap"><?= $u['last_login_at'] ? e(time_ago($u['last_login_at'])) : 'never' ?></td>
           <td class="nowrap" style="text-align:right">
             <div class="row" style="justify-content:flex-end;gap:6px">
               <a class="btn btn-ghost btn-sm" href="/admin/user.php?id=<?= (int)$u['id'] ?>">Open</a>
+              <?php
+              // A paying subscriber is left alone: flipping the plan here would
+              // not stop their subscription, so they would keep being charged
+              // for something they no longer have. Cancel at the provider first.
+              $paying = ($u['plan'] ?? '') === 'pro' && !billing_is_comped($u);
+              ?>
+              <?php if (!$paying): ?>
+                <?php $comped = billing_is_comped($u); ?>
+                <form method="post" style="margin:0"
+                      <?= $comped ? 'onsubmit="return confirm(&quot;Remove full access from '
+                                    . e($u['name']) . '?&quot;)"' : '' ?>>
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="do" value="<?= $comped ? 'fullaccess_off' : 'fullaccess' ?>">
+                  <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
+                  <input type="hidden" name="q" value="<?= e($q) ?>">
+                  <button class="btn <?= $comped ? 'btn-ghost' : '' ?> btn-sm" type="submit"
+                          title="<?= $comped
+                                    ? 'Put this user back on the trial tier'
+                                    : 'Give unlimited posting, free of charge' ?>">
+                    <?= $comped ? 'Remove access' : 'Full access' ?>
+                  </button>
+                </form>
+              <?php endif; ?>
+
               <?php if (!$self): ?>
                 <form method="post" style="margin:0">
                   <?= csrf_field() ?>
@@ -191,6 +237,9 @@ layout_head('All users', 'All users',
 <p class="small muted" style="margin-top:14px">
   Showing up to 300 users. Suspending blocks sign-in immediately; deleting a user also deletes their
   posts, connected accounts and media records.
+  <strong>Full access</strong> gives Pro &mdash; unlimited posts, no trial clock &mdash; without any
+  payment, and is never counted as revenue on the Payments page. Paying subscribers have no such
+  button: cancel their subscription at the provider first, or they keep being charged.
 </p>
 
 <?php layout_foot(); ?>

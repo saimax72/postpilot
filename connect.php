@@ -375,7 +375,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
         <strong>Sign In with LinkedIn using OpenID Connect</strong>. Both are usually granted within
         minutes.'],
       ['Set the redirect URL',
-       'On the <em>Auth</em> tab, add <code><?= e(APP_URL) ?>/accounts.php</code> as an authorised
+       'On the <em>Auth</em> tab, add <code>' . e(APP_URL) . '/accounts.php</code> as an authorised
         redirect URL.'],
       ['Generate a token',
        'Use LinkedIn&rsquo;s <a href="https://www.linkedin.com/developers/tools/oauth" target="_blank" rel="noopener noreferrer">OAuth token generator</a>
@@ -404,7 +404,7 @@ layout_head('Connecting accounts', 'Connecting your accounts',
         &mdash; check the current limit before relying on it.'],
       ['Turn on user authentication',
        'In the app settings, enable <strong>OAuth 2.0</strong>, set the type to <em>Web App</em>, and
-        add <code><?= e(APP_URL) ?>/accounts.php</code> as the callback URL.'],
+        add <code>' . e(APP_URL) . '/accounts.php</code> as the callback URL.'],
       ['Set the scopes',
        'You need <code>tweet.write</code>, <code>tweet.read</code>, <code>users.read</code> and
         <code>offline.access</code>.'],
