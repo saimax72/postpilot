@@ -222,7 +222,7 @@ echo upgrade_nudge(false);
                recording the result. Republishing that posts it twice, which is
                far harder to undo than a post that never went out - so this one
                asks first, and the plain ones do not. */
-            $interrupted = str_contains((string)$p['last_error'], 'Interrupted while publishing');
+            $interrupted = post_may_be_live($p);
             ?>
             <?php if ($interrupted): ?>
               <span class="badge badge-publishing"
@@ -308,8 +308,15 @@ window.Retry = {
     if (!confirm('Requeue all ' + n + ' failed posts? They are spaced an hour apart '
                + 'so they do not hit the same rate limit again.')) return;
     this.send({ all: true, spacing: 60 }, function (data) {
-      if (data.ok) { window.location.reload(); }
-      else { alert(data.error || 'Could not requeue.'); }
+      if (!data.ok) { alert(data.error || 'Could not requeue.'); return; }
+
+      // Posts that may already be live are left out of a bulk requeue, so say
+      // so rather than letting the count quietly disagree with the button.
+      if (data.skipped) {
+        alert(data.count + ' requeued. ' + data.skipped + ' left alone because they may already '
+            + 'be live on the network — check the account, then requeue those individually.');
+      }
+      window.location.reload();
     });
   }
 };

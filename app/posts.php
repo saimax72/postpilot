@@ -321,24 +321,43 @@ function post_retry(int $id, int $userId, ?string $whenUtc = null): bool
  * and firing them all again at once reproduces exactly that. Returns how many
  * were requeued and when the last one is due.
  */
+/**
+ * Requeue every failed post, except the ones that may already be live.
+ *
+ * A bulk action is precisely where nobody inspects the individual rows, so a
+ * post that reached the network before its failure is skipped rather than
+ * silently published a second time. They are reported back so the caller can
+ * say what was left behind, and each can still be requeued by hand after
+ * checking the account.
+ */
 function post_retry_all(int $userId, int $spacingMinutes = 60): array
 {
-    $ids = db_all(
-        "SELECT id FROM posts WHERE user_id = ? AND status = 'failed' ORDER BY scheduled_at ASC",
+    $rows = db_all(
+        "SELECT id, last_error FROM posts WHERE user_id = ? AND status = 'failed'
+         ORDER BY scheduled_at ASC",
         [$userId]
     );
 
-    $when  = time() + 120;          // a couple of minutes to breathe
-    $count = 0;
+    $when    = time() + 120;        // a couple of minutes to breathe
+    $count   = 0;
+    $skipped = 0;
 
-    foreach ($ids as $row) {
+    foreach ($rows as $row) {
+        if (post_may_be_live($row)) {
+            $skipped++;
+            continue;
+        }
         if (post_retry((int)$row['id'], $userId, gmdate('Y-m-d H:i:s', $when))) {
             $count++;
             $when += $spacingMinutes * 60;
         }
     }
 
-    return ['count' => $count, 'last' => $count ? gmdate('Y-m-d H:i:s', $when - $spacingMinutes * 60) : null];
+    return [
+        'count'   => $count,
+        'skipped' => $skipped,
+        'last'    => $count ? gmdate('Y-m-d H:i:s', $when - $spacingMinutes * 60) : null,
+    ];
 }
 
 function post_stats(int $userId): array
@@ -387,6 +406,32 @@ function post_stats(int $userId): array
  * Worth surfacing: such a post sits in the published count looking identical to
  * a real one, and the only way to notice is that the network disagrees.
  */
+/**
+ * Whether this failure might have reached the network anyway.
+ *
+ * A post can go out and still be recorded as failed: the network accepts it,
+ * then the database write that records that fact fails. The tell is the error
+ * text - a lost connection, or the worker recovering a run that was cut off
+ * mid-publish. Both mean the post may already be live.
+ *
+ * Ordinary failures (a rejected image, a bad token, a rate limit) never reached
+ * the network, so they are safe to retry and are not flagged.
+ */
+function post_may_be_live(array $post): bool
+{
+    $err = (string)($post['last_error'] ?? '');
+    if ($err === '') {
+        return false;
+    }
+    foreach (['Interrupted while publishing', 'Lost connection', 'server has gone away',
+              'Error while sending', '2013', '2006'] as $needle) {
+        if (stripos($err, $needle) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function post_was_demo(array $post): bool
 {
     $targets = $post['targets'] ?? [];
