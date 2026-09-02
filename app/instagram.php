@@ -84,6 +84,58 @@ function ig_recent_media(array $account, int $limit = 12, bool $force = false): 
     return ['ok' => true, 'items' => $items, 'cached' => false, 'error' => null];
 }
 
+/**
+ * Posts that appear more than once on the account's own feed.
+ *
+ * This asks Instagram rather than our own records, which is the only way to
+ * catch the case that matters: a post that published, lost its confirmation to
+ * a dropped database connection, was recorded as failed and then republished.
+ * Our records show one post; the feed shows two. Only the feed is right.
+ *
+ * Matching is on the caption. Instagram re-encodes every upload, so two copies
+ * of one picture are not the same bytes and cannot be compared as images
+ * without downloading and perceptually hashing both. An accidental republish
+ * carries the identical caption, which is a sharp enough signal - and posts
+ * with no caption are skipped rather than guessed at.
+ */
+function ig_feed_duplicates(array $account, int $limit = 50, bool $force = false): array
+{
+    $feed = ig_recent_media($account, $limit, $force);
+    if (!$feed['ok']) {
+        return ['ok' => false, 'groups' => [], 'checked' => 0,
+                'skipped' => 0, 'error' => $feed['error']];
+    }
+
+    $byCaption = [];
+    $skipped   = 0;
+
+    foreach ($feed['items'] as $item) {
+        // Collapse whitespace so a stray newline does not hide a match.
+        $key = trim(preg_replace('/\s+/u', ' ', (string)$item['caption']));
+        if ($key === '') {
+            $skipped++;
+            continue;
+        }
+        $byCaption[mb_strtolower($key)][] = $item;
+    }
+
+    $groups = [];
+    foreach ($byCaption as $items) {
+        if (count($items) > 1) {
+            $groups[] = $items;
+        }
+    }
+
+    return [
+        'ok'      => true,
+        'groups'  => $groups,
+        'checked' => count($feed['items']),
+        'skipped' => $skipped,
+        'cached'  => $feed['cached'],
+        'error'   => $feed['error'],
+    ];
+}
+
 /** Drop the cached feed for an account, so the next load refetches. */
 function ig_forget(int $accountId): void
 {
