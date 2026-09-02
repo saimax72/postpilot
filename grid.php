@@ -109,7 +109,7 @@ echo upgrade_nudge(false);
          href="?account=<?= (int)$selected ?>&amp;show=all">All posts</a>
       <a class="<?= $show === 'dupes' ? 'on' : '' ?>"
          href="?account=<?= (int)$selected ?>&amp;show=dupes"
-         title="Posts whose picture is used by another post too">
+         title="Pictures that reached the feed more than once">
         Duplicates<?= $dupes ? ' (' . count($dupes) . ')' : '' ?>
       </a>
     </span>
@@ -135,7 +135,8 @@ echo upgrade_nudge(false);
       <?php if ($show === 'dupes' && !$upcoming): ?>
         <div class="alert alert-info" style="max-width:420px">
           <?= icon('check', 16) ?>
-          <span>No picture on this channel is used by more than one post.</span>
+          <span>No picture on this channel has published more than once.
+          <a href="/duplicates.php?all=1">Check images reused across posts</a>.</span>
         </div>
       <?php endif; ?>
 

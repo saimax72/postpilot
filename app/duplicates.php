@@ -148,21 +148,38 @@ function dup_repeated(int $userId, bool $refresh = false): array
 /**
  * post id => the image it shares with other posts, for marking up a grid.
  *
- * Lighter than dup_repeated(): no targets, no status work, just "which posts
- * are twins". Posts whose image is unique are left out entirely, so a caller
- * can treat presence in this map as "this one is a duplicate".
+ * $liveOnly is the important argument. Repeating a bulk run leaves the same
+ * picture attached to two posts routinely - one failed, one succeeded, or two
+ * drafts - and none of that is a duplicate anybody needs to act on. What
+ * matters is a picture that reached the feed twice, so that is the default.
+ *
+ * "Reached the feed" means a target that published with a real id: a demo
+ * publish was recorded but never transmitted, and counting it would report a
+ * duplicate that does not exist on the network.
  */
-function dup_post_map(int $userId, bool $refresh = false): array
+function dup_post_map(int $userId, bool $refresh = false, bool $liveOnly = true): array
 {
     $files = dup_hashes($userId, $refresh);
     if (!$files) {
         return [];
     }
 
+    $posts = db_all(
+        "SELECT p.id, p.media_path, p.media_original,
+                (SELECT COUNT(*) FROM post_targets t
+                  WHERE t.post_id = p.id
+                    AND t.status = 'published'
+                    AND t.remote_post_id IS NOT NULL
+                    AND t.remote_post_id NOT LIKE 'demo-%') AS live_targets
+           FROM posts p WHERE p.user_id = ?",
+        [$userId]
+    );
+
     $byHash = [];
-    foreach (db_all(
-        'SELECT id, media_path, media_original FROM posts WHERE user_id = ?', [$userId]
-    ) as $post) {
+    foreach ($posts as $post) {
+        if ($liveOnly && (int)$post['live_targets'] === 0) {
+            continue;
+        }
         foreach ([$post['media_original'], $post['media_path']] as $ref) {
             if ($ref && isset($files[$ref])) {
                 // Keyed by post id so one picture cropped two ways, on the same

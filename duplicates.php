@@ -12,8 +12,15 @@ require_once __DIR__ . '/app/layout.php';
 $user = require_login();
 $uid  = (int)$user['id'];
 
-$groups = dup_repeated($uid, isset($_GET['rescan']));
-$sum    = dup_summary($groups);
+$all    = dup_repeated($uid, isset($_GET['rescan']));
+$showAll = isset($_GET['all']);
+
+// Default to what actually reached a feed twice. A picture on two posts is
+// routine - a failed attempt beside a successful one, or two drafts - and
+// listing those buries the one duplicate that is really out there.
+$groups = $showAll ? $all : array_values(array_filter($all, fn($g) => $g['published'] > 1));
+$sum    = dup_summary($all);
+$hidden = count($all) - count($groups);
 
 layout_head('Duplicates', 'Duplicate posts',
     '<a class="btn btn-ghost" href="/duplicates.php?rescan=1">' . icon('back', 15) . ' Rescan</a>');
@@ -27,9 +34,18 @@ layout_head('Duplicates', 'Duplicate posts',
       <div style="width:56px;height:56px;border-radius:16px;background:var(--brand-50);color:var(--brand);display:grid;place-items:center;margin:0 auto 16px">
         <?= icon('check', 26) ?>
       </div>
-      <h3>No image posted twice</h3>
+      <h3><?= $showAll ? 'No image used twice' : 'Nothing published twice' ?></h3>
       <p class="muted" style="max-width:52ch;margin-left:auto;margin-right:auto">
-        Every picture in your calendar is used by a single post.
+        <?php if ($showAll): ?>
+          Every picture in your calendar belongs to a single post.
+        <?php else: ?>
+          No picture has reached a feed more than once.
+          <?php if ($hidden): ?>
+            <?= (int)$hidden ?> image<?= $hidden === 1 ? ' is' : 's are' ?> on more than one post
+            without both having published &mdash;
+            <a href="/duplicates.php?all=1">show those too</a>.
+          <?php endif; ?>
+        <?php endif; ?>
       </p>
     </div>
 
@@ -40,6 +56,23 @@ layout_head('Duplicates', 'Duplicate posts',
       <div class="stat s-yellow"><div class="k">Images reused</div> <div class="v"><?= (int)$sum['images'] ?></div></div>
       <div class="stat">         <div class="k">Extra posts</div>   <div class="v"><?= (int)$sum['extra'] ?></div></div>
     </div>
+
+    <?php if ($showAll || $hidden): ?>
+      <div class="row-between" style="gap:12px;flex-wrap:wrap">
+        <span class="small muted">
+          <?= $showAll
+                ? 'Showing every image used by more than one post.'
+                : 'Showing only pictures that reached a feed more than once.' ?>
+        </span>
+        <?php if ($showAll): ?>
+          <a class="btn btn-ghost btn-sm" href="/duplicates.php">Only what published twice</a>
+        <?php else: ?>
+          <a class="btn btn-ghost btn-sm" href="/duplicates.php?all=1">
+            Also show <?= (int)$hidden ?> reused image<?= $hidden === 1 ? '' : 's' ?>
+          </a>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
 
     <?php foreach ($groups as $g):
       $onFeed = $g['published'] > 1; ?>
