@@ -20,10 +20,10 @@ $posts   = [];
 $account = $selected ? account_find($selected, $uid) : null;
 $live    = ['ok' => false, 'items' => [], 'cached' => false, 'error' => null];
 
-$show = ($_GET['show'] ?? 'upcoming') === 'all' ? 'all' : 'upcoming';
+$show = in_array($_GET['show'] ?? '', ['all', 'dupes'], true) ? $_GET['show'] : 'upcoming';
 
 if ($selected) {
-    if ($show === 'all') {
+    if ($show === 'all' || $show === 'dupes') {
         // Everything this channel has ever had, newest first, which is the
         // order a feed reads in.
         $posts = attach_targets(db_all(
@@ -56,9 +56,22 @@ if ($selected) {
     }
 }
 
+// Which posts share their picture with another post. Cheap - the hashes are
+// cached - and it is what makes a duplicate findable in a wall of thumbnails.
+$dupes = $selected ? dup_post_map($uid, !empty($_GET['rescan'])) : [];
+
+if ($show === 'dupes') {
+    // Only the twins, and sorted so copies of one picture sit next to each
+    // other. Comparing two tiles side by side is the whole point; hunting for
+    // the second one three rows down is not.
+    $posts = array_values(array_filter($posts, fn($p) => isset($dupes[(int)$p['id']])));
+    usort($posts, fn($a, $b) => [$dupes[(int)$a['id']]['hash'], $a['id']]
+                           <=> [$dupes[(int)$b['id']]['hash'], $b['id']]);
+}
+
 // Upcoming stacks newest-first so the next post to go out sits top left; the
-// all-posts view is already in feed order.
-$upcoming = $show === 'all' ? $posts : array_reverse($posts);
+// other views are already in the order they should read.
+$upcoming = $show === 'upcoming' ? array_reverse($posts) : $posts;
 
 layout_head('Grid preview', 'Grid preview',
     '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>');
@@ -94,6 +107,11 @@ echo upgrade_nudge(false);
          href="?account=<?= (int)$selected ?>">Upcoming</a>
       <a class="<?= $show === 'all' ? 'on' : '' ?>"
          href="?account=<?= (int)$selected ?>&amp;show=all">All posts</a>
+      <a class="<?= $show === 'dupes' ? 'on' : '' ?>"
+         href="?account=<?= (int)$selected ?>&amp;show=dupes"
+         title="Posts whose picture is used by another post too">
+        Duplicates<?= $dupes ? ' (' . count($dupes) . ')' : '' ?>
+      </a>
     </span>
   </div>
 
@@ -114,12 +132,20 @@ echo upgrade_nudge(false);
         <div class="alert alert-warn small" style="max-width:420px"><?= e($live['error']) ?></div>
       <?php endif; ?>
 
+      <?php if ($show === 'dupes' && !$upcoming): ?>
+        <div class="alert alert-info" style="max-width:420px">
+          <?= icon('check', 16) ?>
+          <span>No picture on this channel is used by more than one post.</span>
+        </div>
+      <?php endif; ?>
+
       <div class="feed-grid">
         <?php foreach ($upcoming as $p):
           $sent = $p['status'] === 'published';
           $when = $sent ? ($p['published_at'] ?: $p['scheduled_at']) : $p['scheduled_at'];
+          $dup  = $dupes[(int)$p['id']] ?? null;
           ?>
-          <div class="feed-cell <?= $sent ? 'is-sent' : 'is-upcoming' ?><?= $p['status'] === 'failed' ? ' is-bad' : '' ?>"
+          <div class="feed-cell <?= $sent ? 'is-sent' : 'is-upcoming' ?><?= $p['status'] === 'failed' ? ' is-bad' : '' ?><?= $dup ? ' is-dup' : '' ?>"
                title="<?= e(utc_to_local($when, $tz, 'j M H:i') . ' - ' . $p['status'] . ' - ' . str_limit($p['content'], 60)) ?>"
                onclick="Composer.open(<?= (int)$p['id'] ?>)">
             <?php if ($p['media_path'] && is_video($p['media_path'])): ?>
@@ -132,6 +158,11 @@ echo upgrade_nudge(false);
               <span class="ph"><?= e(str_limit($p['content'], 46)) ?></span>
             <?php endif; ?>
             <span class="feed-tag"><?= e(utc_to_local($when, $tz, 'j M')) ?></span>
+            <?php if ($dup): ?>
+              <span class="feed-dup" title="This picture is on <?= (int)$dup['count'] ?> posts">
+                <?= (int)$dup['count'] ?>&times;
+              </span>
+            <?php endif; ?>
           </div>
         <?php endforeach; ?>
 

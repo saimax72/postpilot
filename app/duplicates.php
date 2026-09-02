@@ -145,6 +145,45 @@ function dup_repeated(int $userId, bool $refresh = false): array
     return $groups;
 }
 
+/**
+ * post id => the image it shares with other posts, for marking up a grid.
+ *
+ * Lighter than dup_repeated(): no targets, no status work, just "which posts
+ * are twins". Posts whose image is unique are left out entirely, so a caller
+ * can treat presence in this map as "this one is a duplicate".
+ */
+function dup_post_map(int $userId, bool $refresh = false): array
+{
+    $files = dup_hashes($userId, $refresh);
+    if (!$files) {
+        return [];
+    }
+
+    $byHash = [];
+    foreach (db_all(
+        'SELECT id, media_path, media_original FROM posts WHERE user_id = ?', [$userId]
+    ) as $post) {
+        foreach ([$post['media_original'], $post['media_path']] as $ref) {
+            if ($ref && isset($files[$ref])) {
+                // Keyed by post id so one picture cropped two ways, on the same
+                // post, cannot make that post look like its own duplicate.
+                $byHash[$files[$ref]['hash']][(int)$post['id']] = true;
+            }
+        }
+    }
+
+    $map = [];
+    foreach ($byHash as $hash => $ids) {
+        if (count($ids) < 2) {
+            continue;
+        }
+        foreach (array_keys($ids) as $id) {
+            $map[$id] = ['hash' => $hash, 'count' => count($ids)];
+        }
+    }
+    return $map;
+}
+
 /** Headline numbers for the page. */
 function dup_summary(array $groups): array
 {

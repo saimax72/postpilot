@@ -1986,3 +1986,14 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .feed-cell.is-bad { outline: 2px solid rgba(239, 68, 68, .6); outline-offset: -2px; }
 .feed-cell.is-bad .feed-tag { background: rgba(220, 38, 38, .9); color: #fff; }
+
+/* A tile whose picture is on another post too. The ring is what makes it
+   findable while scrolling a few hundred thumbnails. */
+.feed-cell.is-dup { outline: 3px solid #f59e0b; outline-offset: -3px; }
+.feed-dup {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  padding: 2px 7px; border-radius: 999px;
+  font-size: .6875rem; font-weight: 800; letter-spacing: .02em;
+  background: #f59e0b; color: #1a1206;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+}
