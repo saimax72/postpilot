@@ -1922,3 +1922,23 @@ table.data tbody tr:hover { background: var(--line-soft); }
   background: rgba(34, 197, 94, .16); color: #15803d;
 }
 [data-theme="dark"] .nav-plan.is-pro .nav-plan-tag { color: #4ade80; }
+
+/* ---------- Bulk grid: tiles leaving as they publish ---------- */
+
+/* Collapsing the grid track as well as the tile keeps the remaining images
+   flowing up into the gap, so the grid visibly shrinks as the run proceeds. */
+.bulk-item.is-going {
+  animation: bulk-leave .42s cubic-bezier(.4, 0, .2, 1) forwards;
+  pointer-events: none;
+}
+.bulk-item.is-done { display: none; }
+
+@keyframes bulk-leave {
+  0%   { opacity: 1; transform: scale(1)    translateY(0);    filter: blur(0); }
+  35%  { opacity: 1; transform: scale(1.04) translateY(-4px); }
+  100% { opacity: 0; transform: scale(.82)  translateY(-14px); filter: blur(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulk-item.is-going { animation: none; opacity: 0; }
+}

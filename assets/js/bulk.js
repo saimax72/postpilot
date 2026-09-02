@@ -54,6 +54,8 @@
 
     items: [],       // { path, url, name, video, caption }
     busy: false,
+    retired: {},     // grid index -> already published, tile hidden
+    publishing: false,
 
     /* ------------------------------------------------------------ uploads */
 
@@ -183,6 +185,9 @@
 
     render: function () {
       var grid = $('#b-grid');
+      // The grid is rebuilt from scratch here, so any hidden tiles are gone
+      // with it - the bookkeeping has to match or the count drifts.
+      this.retired = {};
       var slots = this.slots();
 
       $('#b-count').textContent = this.items.length + (this.items.length === 1 ? ' image' : ' images');
@@ -425,6 +430,8 @@
       var done    = 0, okCount = 0;
       var failures = [];
       this.blocked = null;
+      this.publishing = true;
+      this.resetTiles();
 
       var btn = $('#b-now');
       btn.disabled = true;
@@ -437,6 +444,8 @@
           btn.disabled = false;
           $('#b-go').disabled = false;
           $('#b-progress').classList.add('hide');
+          self.publishing = false;
+          self.countRemaining();
 
           if (self.blocked) {
             self.limitReached({
@@ -480,6 +489,8 @@
           if (data.ok && data.published) {
             okCount++;
             self.mark(idx, 'ok', 'published');
+            // A beat so the badge is readable before the tile leaves.
+            setTimeout(function () { self.retire(idx); }, 500);
           } else if (data.blocked) {
             // Every remaining post would fail identically, so stop here and
             // leave the rest of the queue intact for after an upgrade.
@@ -498,9 +509,11 @@
         })
         .then(function () {
           done++;
+          var left = total - done;
           progress(done, total, done === total
-            ? 'Finished ' + done + ' of ' + total
-            : 'Publishing ' + (done + 1) + ' of ' + total, done < total);
+            ? 'Finished all ' + total
+            : 'Publishing ' + (done + 1) + ' of ' + total
+              + ' · ' + left + ' to go', done < total);
           // A breath between posts - the networks throttle bursts.
           setTimeout(step, 1500);
         });
@@ -510,6 +523,56 @@
     },
 
     /** Stamp a result onto one thumbnail in the grid. */
+    /**
+     * Take a published tile out of the grid.
+     *
+     * The tile is hidden rather than removed: mark() and the click handlers
+     * address items by their position in the grid, so deleting a node would
+     * shift every index after it onto the wrong image.
+     *
+     * The count updates as they go, which is the point - watching the number
+     * fall is how you know a long run is actually progressing.
+     */
+    retire: function (index) {
+      var cell = document.querySelectorAll('#b-grid .bulk-item')[index];
+      this.retired[index] = true;
+
+      if (!cell) { this.countRemaining(); return; }
+
+      var self = this;
+      cell.classList.add('is-going');
+
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(function () {
+        cell.classList.add('is-done');
+        self.countRemaining();
+      }, reduce ? 0 : 420);
+    },
+
+    /** How many tiles are still waiting to go out. */
+    countRemaining: function () {
+      var left = 0;
+      for (var i = 0; i < this.items.length; i++) {
+        if (!this.retired[i]) left++;
+      }
+      var el = $('#b-count');
+      if (el) {
+        el.textContent = this.publishing
+          ? left + (left === 1 ? ' image left' : ' images left')
+          : this.items.length + (this.items.length === 1 ? ' image' : ' images');
+      }
+      return left;
+    },
+
+    /** Bring every tile back, for a fresh run. */
+    resetTiles: function () {
+      this.retired = {};
+      $$('#b-grid .bulk-item').forEach(function (c) {
+        c.classList.remove('is-going', 'is-done');
+      });
+      this.countRemaining();
+    },
+
     mark: function (index, state, text) {
       var cell = document.querySelectorAll('#b-grid .bulk-item')[index];
       if (!cell) return;
