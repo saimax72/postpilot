@@ -135,8 +135,9 @@ echo upgrade_nudge(false);
       <?php if ($show === 'dupes' && !$upcoming): ?>
         <div class="alert alert-info" style="max-width:420px">
           <?= icon('check', 16) ?>
-          <span>No picture on this channel has published more than once.
-          <a href="/duplicates.php?all=1">Check images reused across posts</a>.</span>
+          <span>Nothing here was published twice according to our own records.
+          <a href="/duplicates.php">Check the feed itself</a> &mdash; that catches a post that
+          published and then lost its confirmation.</span>
         </div>
       <?php endif; ?>
 

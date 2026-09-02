@@ -1,17 +1,13 @@
 <?php
 /**
- * Finding the same image posted more than once.
+ * Marking up the grid where one picture sits on more than one post.
  *
- * The question this answers is "did I put this picture out twice?", not "are
- * there spare files on disk". Those are different things: one photo cropped for
- * two ratios is two files and one post, which is fine; the same photo in two
- * published posts is one duplicate on the feed, which is not.
- *
- * So files are grouped by content and then collapsed to the posts that use
- * them. A group only counts when two or more posts share the image.
+ * This is a hint, not the authority. Whether something is really on the feed
+ * twice is answered by ig_feed_duplicates(), which asks the network - our own
+ * records cannot see a post that published and then lost its confirmation.
  *
  * Matching is on file content, so a copy saved under a different name is still
- * caught. It will not catch a resized or re-encoded version of the same photo -
+ * caught. It will not catch a resized or re-encoded version of the same photo:
  * that needs perceptual hashing, which is a different and much slower job.
  */
 
@@ -83,69 +79,6 @@ function dup_hashes(int $userId, bool $refresh = false): array
 }
 
 /**
- * Images that appear in more than one post, worst first.
- *
- * A post is counted once however many files of that image it references: a post
- * points at both the original and its crop, and those are the same picture used
- * once, not twice.
- */
-function dup_repeated(int $userId, bool $refresh = false): array
-{
-    $files = dup_hashes($userId, $refresh);
-    if (!$files) {
-        return [];
-    }
-
-    $posts = attach_targets(db_all(
-        'SELECT id, status, scheduled_at, published_at, content, media_path, media_original
-           FROM posts WHERE user_id = ? ORDER BY COALESCE(published_at, scheduled_at) ASC',
-        [$userId]
-    ));
-
-    $byHash = [];
-    foreach ($posts as $post) {
-        $hashes = [];
-        foreach ([$post['media_original'], $post['media_path']] as $ref) {
-            if ($ref && isset($files[$ref])) {
-                $hashes[$files[$ref]['hash']] = $files[$ref];
-            }
-        }
-        // Keyed by post id so the original and the crop cannot count twice.
-        foreach ($hashes as $hash => $file) {
-            $byHash[$hash]['file']         = $byHash[$hash]['file'] ?? $file;
-            $byHash[$hash]['posts'][$post['id']] = $post;
-        }
-    }
-
-    $groups = [];
-    foreach ($byHash as $hash => $g) {
-        $list = array_values($g['posts']);
-        if (count($list) < 2) {
-            continue;
-        }
-
-        $published = 0;
-        foreach ($list as $p) {
-            if ($p['status'] === 'published' && !post_was_demo($p)) {
-                $published++;
-            }
-        }
-
-        $groups[] = [
-            'hash'      => $hash,
-            'file'      => $g['file'],
-            'posts'     => $list,
-            'count'     => count($list),
-            'published' => $published,
-        ];
-    }
-
-    // The ones actually live on a feed twice matter most.
-    usort($groups, fn($a, $b) => [$b['published'], $b['count']] <=> [$a['published'], $a['count']]);
-    return $groups;
-}
-
-/**
  * post id => the image it shares with other posts, for marking up a grid.
  *
  * $liveOnly is the important argument. Repeating a bulk run leaves the same
@@ -199,17 +132,4 @@ function dup_post_map(int $userId, bool $refresh = false, bool $liveOnly = true)
         }
     }
     return $map;
-}
-
-/** Headline numbers for the page. */
-function dup_summary(array $groups): array
-{
-    $onFeed = 0; $extra = 0;
-    foreach ($groups as $g) {
-        $extra += $g['count'] - 1;
-        if ($g['published'] > 1) {
-            $onFeed++;
-        }
-    }
-    return ['images' => count($groups), 'extra' => $extra, 'on_feed' => $onFeed];
 }

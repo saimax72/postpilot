@@ -1943,31 +1943,32 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .bulk-item.is-going { animation: none; opacity: 0; }
 }
 
-/* ---------- Duplicate posts ---------- */
+/* ---------- Duplicates ---------- */
 
-/* One picture, then the posts that used it - the image is the identifier, the
-   list is the finding. */
-.dup-set { display: flex; gap: 18px; align-items: flex-start; }
+/* Copies side by side, each shown as the post itself: picture, when, caption.
+   Comparing them is the entire job of this page. */
+.dup-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.dup-copy {
+  display: block; color: inherit; text-decoration: none;
+  border-radius: 12px; padding: 6px;
+  transition: background .15s ease;
+}
+.dup-copy:hover { background: var(--line-soft); }
 
 .dup-thumb {
-  flex: none; width: 132px; aspect-ratio: 1;
-  border-radius: 12px; overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: 10px; overflow: hidden;
   border: 1px solid var(--line); background: var(--line-soft);
 }
 .dup-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.dup-posts { flex: 1; min-width: 0; display: grid; gap: 8px; }
-
-.dup-post {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px;
-  border: 1px solid var(--line); border-radius: var(--r);
-  background: var(--card);
-}
-
-@media (max-width: 640px) {
-  .dup-set { flex-direction: column; }
-  .dup-thumb { width: 100%; aspect-ratio: 16/9; }
+.dup-caption {
+  margin: 4px 0 0; font-size: .8125rem; line-height: 1.5;
+  color: var(--ink-2);
 }
 
 /* Per-channel outcome inside a queue chip. Small, but it is the difference
