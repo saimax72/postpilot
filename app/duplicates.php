@@ -1,20 +1,18 @@
 <?php
 /**
- * Finding the same image more than once.
+ * Finding the same image posted more than once.
  *
- * Bulk uploads make this easy to do by accident: the same photo picked twice
- * from a folder, or re-exported under a new name, becomes two posts nobody
- * meant to schedule.
+ * The question this answers is "did I put this picture out twice?", not "are
+ * there spare files on disk". Those are different things: one photo cropped for
+ * two ratios is two files and one post, which is fine; the same photo in two
+ * published posts is one duplicate on the feed, which is not.
  *
- * Matching is on file content, not on filename or size, so a copy renamed
- * "IMG_2201 (1).jpg" is still caught. It will not catch a re-encoded or
- * resized version of the same photo - that needs perceptual hashing, which is
- * a different and much slower job. Exact copies are the common case and this
- * finds them reliably rather than approximately.
+ * So files are grouped by content and then collapsed to the posts that use
+ * them. A group only counts when two or more posts share the image.
  *
- * Originals are compared rather than the cropped files: the same photo cropped
- * square and again as 4:5 produces two different files, and they are not
- * duplicates - they are one photo, used twice on purpose.
+ * Matching is on file content, so a copy saved under a different name is still
+ * caught. It will not catch a resized or re-encoded version of the same photo -
+ * that needs perceptual hashing, which is a different and much slower job.
  */
 
 /** Where the hash cache for one user lives. */
@@ -26,9 +24,9 @@ function dup_cache_path(int $userId): string
 /**
  * Every media file belonging to this user, with a content hash.
  *
- * Hashes are cached against size and modification time, so a second visit
- * costs a stat() per file rather than reading every byte again. On shared
- * hosting that is the difference between instant and half a minute.
+ * Hashes are cached against size and modification time, so a second visit costs
+ * a stat() per file rather than reading every byte again. On shared hosting
+ * that is the difference between instant and half a minute.
  */
 function dup_hashes(int $userId, bool $refresh = false): array
 {
@@ -50,10 +48,9 @@ function dup_hashes(int $userId, bool $refresh = false): array
         if ($name[0] === '.' || !is_file($dir . '/' . $name)) {
             continue;
         }
-        $abs = $dir . '/' . $name;
-        $rel = $userId . '/' . $name;
-
-        $size = (int)filesize($abs);
+        $abs   = $dir . '/' . $name;
+        $rel   = $userId . '/' . $name;
+        $size  = (int)filesize($abs);
         $mtime = (int)filemtime($abs);
 
         $hit = $cache[$name] ?? null;
@@ -86,102 +83,77 @@ function dup_hashes(int $userId, bool $refresh = false): array
 }
 
 /**
- * Groups of identical files, largest waste first.
+ * Images that appear in more than one post, worst first.
  *
- * Each group carries the posts that use each copy, because that is what decides
- * whether a copy can safely go: a file no post references is just clutter, one
- * that is scheduled is not.
+ * A post is counted once however many files of that image it references: a post
+ * points at both the original and its crop, and those are the same picture used
+ * once, not twice.
  */
-function dup_groups(int $userId, bool $refresh = false): array
+function dup_repeated(int $userId, bool $refresh = false): array
 {
     $files = dup_hashes($userId, $refresh);
     if (!$files) {
         return [];
     }
 
-    // Which posts point at each file, as an original or as a crop source.
-    $usage = [];
-    foreach (db_all(
-        'SELECT id, status, scheduled_at, media_path, media_original
-           FROM posts WHERE user_id = ?', [$userId]
-    ) as $post) {
-        foreach ([$post['media_original'], $post['media_path']] as $ref) {
-            if ($ref) {
-                $usage[$ref][$post['id']] = $post;
-            }
-        }
-    }
+    $posts = attach_targets(db_all(
+        'SELECT id, status, scheduled_at, published_at, content, media_path, media_original
+           FROM posts WHERE user_id = ? ORDER BY COALESCE(published_at, scheduled_at) ASC',
+        [$userId]
+    ));
 
     $byHash = [];
-    foreach ($files as $rel => $f) {
-        $f['posts'] = array_values($usage[$rel] ?? []);
-        $byHash[$f['hash']][] = $f;
+    foreach ($posts as $post) {
+        $hashes = [];
+        foreach ([$post['media_original'], $post['media_path']] as $ref) {
+            if ($ref && isset($files[$ref])) {
+                $hashes[$files[$ref]['hash']] = $files[$ref];
+            }
+        }
+        // Keyed by post id so the original and the crop cannot count twice.
+        foreach ($hashes as $hash => $file) {
+            $byHash[$hash]['file']         = $byHash[$hash]['file'] ?? $file;
+            $byHash[$hash]['posts'][$post['id']] = $post;
+        }
     }
 
     $groups = [];
-    foreach ($byHash as $hash => $copies) {
-        if (count($copies) < 2) {
+    foreach ($byHash as $hash => $g) {
+        $list = array_values($g['posts']);
+        if (count($list) < 2) {
             continue;
         }
-        // Oldest first: the first copy is the one worth keeping.
-        usort($copies, fn($a, $b) => strcmp($a['name'], $b['name']));
 
-        $used = 0;
-        foreach ($copies as $c) {
-            $used += count($c['posts']) > 0 ? 1 : 0;
+        $published = 0;
+        foreach ($list as $p) {
+            if ($p['status'] === 'published' && !post_was_demo($p)) {
+                $published++;
+            }
         }
 
         $groups[] = [
-            'hash'    => $hash,
-            'copies'  => $copies,
-            'count'   => count($copies),
-            'wasted'  => $copies[0]['size'] * (count($copies) - 1),
-            'in_use'  => $used,
+            'hash'      => $hash,
+            'file'      => $g['file'],
+            'posts'     => $list,
+            'count'     => count($list),
+            'published' => $published,
         ];
     }
 
-    usort($groups, fn($a, $b) => $b['wasted'] <=> $a['wasted']);
+    // The ones actually live on a feed twice matter most.
+    usort($groups, fn($a, $b) => [$b['published'], $b['count']] <=> [$a['published'], $a['count']]);
     return $groups;
 }
 
 /** Headline numbers for the page. */
 function dup_summary(array $groups): array
 {
-    $extra = 0; $wasted = 0;
+    $onFeed = 0; $extra = 0;
     foreach ($groups as $g) {
-        $extra  += $g['count'] - 1;
-        $wasted += $g['wasted'];
+        $extra += $g['count'] - 1;
+        if ($g['published'] > 1) {
+            $onFeed++;
+        }
     }
-    return ['groups' => count($groups), 'extra' => $extra, 'wasted' => $wasted];
-}
-
-/**
- * Delete one copy, but only when nothing points at it.
- *
- * Refusing to remove a file a post uses is the whole safety property here:
- * these are scheduled posts, and a missing image fails at publish time, hours
- * later, when nobody is watching.
- */
-function dup_delete(int $userId, string $rel): array
-{
-    if (strpos($rel, $userId . '/') !== 0 || strpos($rel, '..') !== false) {
-        return [false, 'That file does not belong to your account.'];
-    }
-
-    $used = (int)db_value(
-        'SELECT COUNT(*) FROM posts WHERE user_id = ? AND (media_path = ? OR media_original = ?)',
-        [$userId, $rel, $rel]
-    );
-    if ($used > 0) {
-        return [false, 'That copy is used by ' . $used . ' post' . ($used === 1 ? '' : 's') . ', so it was kept.'];
-    }
-
-    $abs = rtrim(UPLOAD_DIR, '/\\') . '/' . $rel;
-    if (!is_file($abs)) {
-        return [false, 'That file is already gone.'];
-    }
-
-    @unlink($abs);
-    log_activity($userId, 'media_dedupe', 'Removed duplicate ' . basename($rel));
-    return [true, 'Copy deleted.'];
+    return ['images' => count($groups), 'extra' => $extra, 'on_feed' => $onFeed];
 }

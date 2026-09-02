@@ -1943,29 +1943,31 @@ table.data tbody tr:hover { background: var(--line-soft); }
   .bulk-item.is-going { animation: none; opacity: 0; }
 }
 
-/* ---------- Duplicate image sets ---------- */
+/* ---------- Duplicate posts ---------- */
 
-.dup-row {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
-  gap: 16px;
-}
+/* One picture, then the posts that used it - the image is the identifier, the
+   list is the finding. */
+.dup-set { display: flex; gap: 18px; align-items: flex-start; }
 
 .dup-thumb {
-  position: relative; aspect-ratio: 1;
+  flex: none; width: 132px; aspect-ratio: 1;
   border-radius: 12px; overflow: hidden;
   border: 1px solid var(--line); background: var(--line-soft);
 }
 .dup-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* The first copy is the one that survives "delete all unused", so it is marked
-   rather than left for the reader to work out from position alone. */
-.dup-copy.is-keep .dup-thumb { border-color: var(--brand); }
-.dup-tag {
-  position: absolute; top: 7px; left: 7px;
-  padding: 2px 8px; border-radius: 999px;
-  font-size: .625rem; font-weight: 700; letter-spacing: .04em;
-  text-transform: uppercase;
-  background: var(--brand); color: #fff;
+.dup-posts { flex: 1; min-width: 0; display: grid; gap: 8px; }
+
+.dup-post {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--card);
+}
+
+@media (max-width: 640px) {
+  .dup-set { flex-direction: column; }
+  .dup-thumb { width: 100%; aspect-ratio: 16/9; }
 }
 
 /* Per-channel outcome inside a queue chip. Small, but it is the difference
