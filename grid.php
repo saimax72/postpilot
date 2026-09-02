@@ -20,26 +20,45 @@ $posts   = [];
 $account = $selected ? account_find($selected, $uid) : null;
 $live    = ['ok' => false, 'items' => [], 'cached' => false, 'error' => null];
 
-if ($selected) {
-    // Only what has not gone out yet - anything published is already in the
-    // real feed below, and showing it twice would misrepresent the grid.
-    $posts = attach_targets(db_all(
-        "SELECT p.* FROM posts p
-         JOIN post_targets t ON t.post_id = p.id
-         WHERE p.user_id = ? AND t.social_account_id = ?
-           AND p.status IN ('scheduled','publishing','draft')
-         ORDER BY p.scheduled_at ASC
-         LIMIT 18",
-        [$uid, $selected]
-    ));
+$show = ($_GET['show'] ?? 'upcoming') === 'all' ? 'all' : 'upcoming';
 
-    if ($account && $account['platform'] === 'instagram') {
-        $live = ig_recent_media($account, 12, !empty($_GET['refresh']));
+if ($selected) {
+    if ($show === 'all') {
+        // Everything this channel has ever had, newest first, which is the
+        // order a feed reads in.
+        $posts = attach_targets(db_all(
+            "SELECT p.* FROM posts p
+             JOIN post_targets t ON t.post_id = p.id
+             WHERE p.user_id = ? AND t.social_account_id = ?
+             ORDER BY COALESCE(p.published_at, p.scheduled_at) DESC
+             LIMIT 300",
+            [$uid, $selected]
+        ));
+    } else {
+        // Only what has not gone out yet - anything published is already in the
+        // real feed below, and showing it twice would misrepresent the grid.
+        $posts = attach_targets(db_all(
+            "SELECT p.* FROM posts p
+             JOIN post_targets t ON t.post_id = p.id
+             WHERE p.user_id = ? AND t.social_account_id = ?
+               AND p.status IN ('scheduled','publishing','draft')
+             ORDER BY p.scheduled_at ASC
+             LIMIT 18",
+            [$uid, $selected]
+        ));
+
+        // The live feed is only fetched alongside the upcoming view. In the
+        // all-posts view the same pictures are already there from our own
+        // records, and pulling them twice would double the grid.
+        if ($account && $account['platform'] === 'instagram') {
+            $live = ig_recent_media($account, 12, !empty($_GET['refresh']));
+        }
     }
 }
 
-// Newest-first is how a feed fills: the next post to go out sits top left.
-$upcoming = array_reverse($posts);
+// Upcoming stacks newest-first so the next post to go out sits top left; the
+// all-posts view is already in feed order.
+$upcoming = $show === 'all' ? $posts : array_reverse($posts);
 
 layout_head('Grid preview', 'Grid preview',
     '<button class="btn" onclick="Composer.open()">' . icon('plus', 16) . ' New post</button>');
@@ -69,12 +88,23 @@ echo upgrade_nudge(false);
         </a>
       <?php endforeach; ?>
     </span>
+
+    <span class="seg">
+      <a class="<?= $show === 'upcoming' ? 'on' : '' ?>"
+         href="?account=<?= (int)$selected ?>">Upcoming</a>
+      <a class="<?= $show === 'all' ? 'on' : '' ?>"
+         href="?account=<?= (int)$selected ?>&amp;show=all">All posts</a>
+    </span>
   </div>
 
   <div class="row" style="align-items:flex-start;gap:32px;flex-wrap:wrap">
     <div>
       <div class="row-between" style="margin-bottom:10px;max-width:420px">
-        <span class="small muted">Upcoming posts stacked on your real feed.</span>
+        <span class="small muted">
+          <?= $show === 'all'
+                ? count($upcoming) . ' post' . (count($upcoming) === 1 ? '' : 's') . ', newest first'
+                : 'Upcoming posts stacked on your real feed.' ?>
+        </span>
         <?php if ($live['ok']): ?>
           <a class="tiny" href="?account=<?= (int)$selected ?>&amp;refresh=1">Refresh</a>
         <?php endif; ?>
@@ -85,18 +115,23 @@ echo upgrade_nudge(false);
       <?php endif; ?>
 
       <div class="feed-grid">
-        <?php foreach ($upcoming as $p): ?>
-          <div class="feed-cell is-upcoming"
-               title="<?= e(utc_to_local($p['scheduled_at'], $tz, 'j M H:i') . ' — ' . str_limit($p['content'], 60)) ?>"
+        <?php foreach ($upcoming as $p):
+          $sent = $p['status'] === 'published';
+          $when = $sent ? ($p['published_at'] ?: $p['scheduled_at']) : $p['scheduled_at'];
+          ?>
+          <div class="feed-cell <?= $sent ? 'is-sent' : 'is-upcoming' ?><?= $p['status'] === 'failed' ? ' is-bad' : '' ?>"
+               title="<?= e(utc_to_local($when, $tz, 'j M H:i') . ' - ' . $p['status'] . ' - ' . str_limit($p['content'], 60)) ?>"
                onclick="Composer.open(<?= (int)$p['id'] ?>)">
             <?php if ($p['media_path'] && is_video($p['media_path'])): ?>
-              <video src="<?= e(media_url($p['media_path'])) ?>" muted playsinline></video>
+              <video src="<?= e(media_url($p['media_path'])) ?>" muted playsinline preload="none"></video>
             <?php elseif ($p['media_path']): ?>
-              <img src="<?= e(media_url($p['media_path'])) ?>" alt="">
+              <?php /* The all-posts view can be hundreds of tiles, so they load
+                       as they are scrolled to rather than all at once. */ ?>
+              <img src="<?= e(media_url($p['media_path'])) ?>" alt="" loading="lazy" decoding="async">
             <?php else: ?>
               <span class="ph"><?= e(str_limit($p['content'], 46)) ?></span>
             <?php endif; ?>
-            <span class="feed-tag"><?= e(utc_to_local($p['scheduled_at'], $tz, 'j M')) ?></span>
+            <span class="feed-tag"><?= e(utc_to_local($when, $tz, 'j M')) ?></span>
           </div>
         <?php endforeach; ?>
 

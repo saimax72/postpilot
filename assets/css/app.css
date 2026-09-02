@@ -1977,3 +1977,12 @@ table.data tbody tr:hover { background: var(--line-soft); }
 .chip-bad  { color: #b91c1c; font-weight: 650; cursor: help; }
 [data-theme="dark"] .chip-ok  { color: #4ade80; }
 [data-theme="dark"] .chip-bad { color: #f87171; }
+
+/* Grid preview: a published tile is fact, an upcoming one is a plan, so they
+   are not drawn the same. */
+.feed-cell.is-sent { opacity: .95; }
+.feed-cell.is-sent .feed-tag {
+  background: rgba(34, 197, 94, .9); color: #fff;
+}
+.feed-cell.is-bad { outline: 2px solid rgba(239, 68, 68, .6); outline-offset: -2px; }
+.feed-cell.is-bad .feed-tag { background: rgba(220, 38, 38, .9); color: #fff; }
