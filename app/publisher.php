@@ -28,6 +28,23 @@ function publish_due_posts(int $limit = 25): array
 
     $report = ['processed' => 0, 'published' => 0, 'failed' => 0, 'details' => []];
 
+    // Anything still claimed long after its run began was interrupted - a fatal
+    // error, a timeout, a connection lost mid-write. The worker only ever looks
+    // at 'scheduled', so without this those posts are invisible forever.
+    //
+    // They are parked as failed rather than requeued: an interrupted post may
+    // already be live on the network without that having been recorded, so
+    // resending it is the user's call, not something to do automatically.
+    $report['recovered'] = db_run(
+        "UPDATE posts
+            SET status = 'failed',
+                last_error = ?
+          WHERE status = 'publishing'
+            AND updated_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 15 MINUTE)",
+        ['Interrupted while publishing. It may or may not have gone out - check the '
+         . 'account before republishing.']
+    )->rowCount();
+
     foreach ($due as $post) {
         // Claim the row so two overlapping cron runs cannot double-post.
         $claimed = db_run(
@@ -92,6 +109,14 @@ function publish_post(int $postId): array
         } catch (Throwable $e) {
             $res = ['ok' => false, 'error' => $e->getMessage()];
         }
+
+        // Publishing can take minutes - an Instagram container is polled until
+        // it reports FINISHED - which is long enough for MySQL to close an idle
+        // connection. Reconnect before writing, because this write is the only
+        // record that the post actually went out. Losing it leaves a post live
+        // on the network and marked failed here, which invites someone to
+        // publish it a second time.
+        db_ping();
 
         if (!empty($res['ok'])) {
             $anySuccess = true;
