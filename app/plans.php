@@ -247,6 +247,87 @@ function posts_remaining_today(int $userId, ?array $user = null): ?int
     return max(0, $limit - usage_posts_today($userId, $user));
 }
 
+/** Where an upgrade actually starts: checkout if it exists, the plans page if not. */
+function upgrade_url(): string
+{
+    return billing_enabled() ? '/upgrade.php' : '/pricing.php';
+}
+
+/**
+ * Contextual guidance towards Pro, for someone still on the trial.
+ *
+ * Deliberately quiet until it is relevant. A banner that says "upgrade!" on
+ * every page from day one is ignored by day two, so this stays informational
+ * while there is plenty of headroom and only becomes a prompt when the user is
+ * actually near a wall - or has hit one.
+ *
+ * $always shows the quiet form even with headroom. Use it on the pages where
+ * knowing the number ahead of time matters, like bulk upload.
+ */
+function upgrade_nudge(bool $always = false, ?array $user = null): string
+{
+    $user = $user ?: auth_user();
+    if (!$user || is_admin_user($user) || plan_key($user) !== 'trial') {
+        return '';
+    }
+
+    $uid   = (int)$user['id'];
+    $limit = plan_limit('posts_per_day', $user);
+    $used  = usage_posts_today($uid, $user);
+    $left  = $limit > 0 ? max(0, $limit - $used) : null;
+    $days  = trial_days_left($user);
+
+    $btn = '<a class="btn btn-sm" href="' . upgrade_url() . '">Upgrade to Pro</a>';
+
+    if (trial_expired($user)) {
+        return upgrade_panel('Your free trial has ended',
+            'Everything you have made is still here, and posts already scheduled keep publishing. '
+            . 'Only creating new ones is paused. Pro reopens it immediately.', $btn);
+    }
+
+    if ($left === 0) {
+        return upgrade_panel('That is today&rsquo;s ' . $limit . ' posts',
+            'The limit resets at midnight in your timezone. Pro removes it entirely, along with '
+            . 'the ' . TRIAL_DAYS . '-day clock.', $btn);
+    }
+
+    // Near a wall: little headroom left today, or the trial nearly over.
+    $tight = ($limit > 0 && $left <= max(2, (int)ceil($limit * 0.3))) || $days <= 2;
+
+    if ($tight) {
+        $why = $days <= 2
+            ? 'Your trial ends ' . ($days <= 0 ? 'today' : ($days === 1 ? 'tomorrow' : 'in ' . $days . ' days')) . '.'
+            : 'You have ' . $left . ' post' . ($left === 1 ? '' : 's') . ' left today.';
+        return upgrade_panel($why . ' Pro has no limits',
+            'Unlimited posts, unlimited channels, and nothing to keep an eye on. '
+            . billing_price_label() . ' ' . billing_period_label() . '.', $btn);
+    }
+
+    if (!$always) {
+        return '';
+    }
+
+    // Plenty of room: state the number, do not sell.
+    return '<div class="limit-wrap"><div class="limit-note is-quiet">'
+         . '<div class="limit-body"><p style="margin:0">'
+         . '<strong>' . $left . ' more post' . ($left === 1 ? '' : 's') . ' today</strong> on your free trial'
+         . ($days !== null ? ', ' . $days . ' day' . ($days === 1 ? '' : 's') . ' of trial left' : '')
+         . '. <a href="' . upgrade_url() . '">Pro removes both limits</a>.'
+         . '</p></div></div></div>';
+}
+
+/** The panel shape shared by every nudge, and mirrored by bulk.js. */
+function upgrade_panel(string $title, string $body, string $action): string
+{
+    return '<div class="limit-wrap"><div class="limit-note">'
+         . '<div class="limit-icon">&#10022;</div>'
+         . '<div class="limit-body">'
+         . '<h4>' . $title . '</h4>'
+         . '<p>' . $body . '</p>'
+         . $action
+         . '</div></div></div>';
+}
+
 /** Usage lines for the settings page. */
 function plan_usage_rows(int $userId, ?array $user = null): array
 {

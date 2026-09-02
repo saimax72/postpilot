@@ -109,7 +109,11 @@ layout_head('Settings', 'Settings');
   <div class="card">
     <div class="card-head">
       <h3>Your plan</h3>
-      <a class="btn btn-ghost btn-sm" href="/pricing.php">Compare plans</a>
+      <?php if (plan_key() === 'trial' && !is_admin_user()): ?>
+        <a class="btn btn-sm" href="<?= e(upgrade_url()) ?>">Upgrade to Pro</a>
+      <?php else: ?>
+        <a class="btn btn-ghost btn-sm" href="/pricing.php">Compare plans</a>
+      <?php endif; ?>
     </div>
     <div class="card-pad">
       <div class="row" style="justify-content:space-between;align-items:baseline;gap:14px">
@@ -152,6 +156,8 @@ layout_head('Settings', 'Settings');
         <p class="tiny muted" style="margin:14px 0 0">
           Administrators are exempt from every plan limit.
         </p>
+      <?php else: ?>
+        <div style="margin-top:18px"><?= upgrade_nudge(true) ?></div>
       <?php endif; ?>
     </div>
   </div>

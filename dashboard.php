@@ -59,6 +59,7 @@ $actions = '<a class="btn btn-ghost btn-sm" href="/bulk.php">' . icon('zap', 15)
 layout_head('Calendar', 'Calendar', $actions);
 
 echo page_banner('banner-01-calendar-platforms');
+echo upgrade_nudge(false);
 ?>
 
 <?php if (!$accounts): ?>

@@ -59,6 +59,7 @@ $actions = '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('cale
 layout_head('Queue', 'Queue', $actions);
 
 echo page_banner('banner-03-workflow-icons');
+echo upgrade_nudge(false);
 ?>
 
 <?php if ($next): ?>

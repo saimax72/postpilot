@@ -12,6 +12,7 @@ layout_head('Bulk upload', 'Bulk upload',
     '<a class="btn btn-ghost btn-sm" href="/dashboard.php">' . icon('calendar', 15) . ' Calendar</a>');
 
 echo page_banner('banner-05-calendar-desk');
+echo upgrade_nudge(true);
 ?>
 
 <?php if (trial_expired()): ?>

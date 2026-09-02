@@ -1900,3 +1900,16 @@ table.data tbody tr:hover { background: var(--line-soft); }
 }
 .limit-tally { color: var(--muted) !important; }
 .limit-body .btn { margin-top: 4px; }
+
+/* The informational form: a line of fact, not a pitch. Used while the user
+   still has plenty of headroom, so it does not become wallpaper. */
+.limit-note.is-quiet {
+  padding: 11px 16px;
+  background: var(--line-soft);
+  border-color: var(--line);
+  box-shadow: none;
+}
+.limit-note.is-quiet .limit-body p {
+  font-size: .8125rem; color: var(--muted);
+}
+.limit-note.is-quiet a { color: var(--brand); font-weight: 600; }
